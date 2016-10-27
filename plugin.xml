@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin id="cordova-plugin-kumulos-sdk" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>
+		KumulosSDKPlugin
+	</name>
+	<js-module name="KumulosSDKCore" src="www/kumulos-sdk-core.js">
+		<clobbers target="window.kumulosSdk.core" />
+	</js-module>
+	<js-module name="KumulosSDK" src="www/kumulos-sdk-plugin.js">
+		<clobbers target="window.kumulosSdk" />
+	</js-module>
+	<dependency id="cordova-plugin-appversion" />
+	<dependency id="cordova-plugin-device" />
+	<dependency id="cordova-plugin-file" />
+	<platform name="ios">
+		<config-file parent="/*" target="config.xml">
+			<feature name="KumulosSDKPlugin">
+				<param name="ios-package" value="KumulosSDKPlugin" />
+			</feature>
+		</config-file>
+		<header-file src="src/ios/MobileProvision.h" />
+		<source-file src="src/ios/MobileProvision.m" />
+		<source-file src="src/ios/KumulosSDKPlugin.m" />
+	</platform>
+	<platform name="android">
+		<config-file parent="/*" target="res/xml/config.xml">
+			<feature name="KumulosSDKPlugin">
+				<param name="android-package" value="com.kumulos.cordova.android.KumulosSDKPlugin" />
+  				<param name="onload" value="true" />
+			</feature>
+		</config-file>
+		<config-file parent="/*" target="AndroidManifest.xml">
+		</config-file>
+		<source-file src="src/android/KumulosSDKPlugin.java" target-dir="src/com/kumulos/cordova/android" />
+	</platform>
+</plugin>
