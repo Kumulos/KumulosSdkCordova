@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://code.waracle.net/kumulos/sdk-cordova/tree/master"
+    "url": "https://github.com/Kumulos/KumulosSdkCordova"
   },
   "keywords": [
     "ecosystem:cordova",
