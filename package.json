@@ -16,8 +16,10 @@
   "keywords": [
     "ecosystem:cordova",
     "cordova-ios",
+    "cordova-android",
     "kumulos",
-    "kumulos sdk"
+    "kumulos sdk",
+    "kumulos cordova"
   ],
   "author": "Shaoyun Li",
   "license": "The MIT License (MIT)"
