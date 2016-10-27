@@ -19,7 +19,7 @@ The SDK provides the following APIs
 ## Initialization of SDK
 The plugin defines global `window.kumulosSdk` object. 
 There are two properties of the object window.kumulosSdk.
-* Client: the SDK core class. It is required apiKey and secreteKey when instiating the class. 
+* Client: the SDK core class. It is required to provide apiKey and secreteKey when instiating the class. 
 * getDeviceInfo: the library to get device information. It returns a device info object which has the properties:
  * iOSTokenType: iOS push token type (development, ad-hoc, app-store). iOSTokenType is only required on iOS platform and needed in registering Push Notification;
  * timeZone: time zone in  IANA (Internet Assigned Numbers Authority) format
