@@ -1,32 +1,29 @@
-# cordova-plugin-kumulos-sdk
-The plugin implements a Kumulos SDK library allowing API calls, installation tracking and push notification powerd by Kumulos server.  
+Kumulos provides an SDK in the form of a Cordova plugin to ease the integration of the Kumulos [App Build](https://docs.kumulos.com/build/overview), [Push Notification](https://docs.kumulos.com/push) and [Analytics](https://docs.kumulos.com/analytics) features into your hybrid app. This guide provides an overview of setting up the SDK for your project and sample usage.
 
-The SDK provides the following APIs 
-* Kumulos API call:  This service takes HTTP urlencoded form POST requests and returns the API method responses as JSON format. 
-* Installation tracking: Upon instantiation, the Kumulos SDK will submit meta data about the current installation to the Kumulos server, including a generated unique installation ID.
-* Push notification: This service provides methods to 
- * store push notification token on Kumulos server
- * remove push notification token from Kumulos server
- * track push notification messages on Kumulos server
+The open-source Kumulos SDK is on Github [https://github.com/Kumulos/KumulosSdkCordova](https://github.com/Kumulos/KumulosSdkCordova) and currently supports hybrid apps on iOS and Android, allowing you to:
 
-## Installation
+* Call API Methods - This feature takes HTTP url encoded form POST requests and returns API method responses in JSON.
+* Upload Analytics - Upon instantiation, the Kumulos SDK will submit meta data about the current installation to the Kumulos server, including a generated unique installation ID.
+* Receive push notifications - This feature provides methods to:
+    * upload and store push tokens in Kumulos
+    * remove push tokens from Kumulos
+    * track opens in Kumulos
+
+# Installation
+The Kumulos SDK can be installed with the following command:
 `cordova plugin add cordova-plugin-kumulos-sdk`
 
-## Supported Platforms
-* Andriod
-* iOS
+# Initialization
+The plugin defines global `window.kumulosSdk` object containing two properties:
 
-## Initialization of SDK
-The plugin defines global `window.kumulosSdk` object. 
-There are two properties of the object window.kumulosSdk.
-* Client: the SDK core class. It is required to provide apiKey and secreteKey when instantiating the class. 
-* getDeviceInfo: the library to get device information. It returns a device info object which has the properties:
- * iOSTokenType: iOS push token type (development, ad-hoc, app-store). iOSTokenType is only required on iOS platform and needed in registering Push Notification;
- * timeZone: time zone in  IANA (Internet Assigned Numbers Authority) format
+* `Client` - the SDK core class. This is required to provide apiKey and secreteKey when instantiating the class.
+* `getDeviceInfo()` - the method to get device information. This returns a device info object which has the following properties:
+ * `iOSTokenType` - the iOS push token type (development, ad-hoc, app-store), required for registering for push notifications on iOS only.
+ * `timeZone` - time zone in [IANA (Internet Assigned Numbers Authority)](https://www.iana.org/time-zones) format
 
-Although in the global scope, `window.kumulosSdk` is not available until after the `deviceready` event. The appService needs to be initialised before calling its methods. Please see the example below.   
+Although in the global scope, `window.kumulosSdk` is not available until after the `deviceready` event and this must be initialized before calling its methods. Please see the example below.   
 
-```
+```language-javascript
 var kumulosClient
 
 initializeSdk().then(function (client) {
@@ -46,16 +43,15 @@ function initializeSdk() {
 };
 ```
 
-API Key and Secret Key can be obtained from the Kumulos application portal. 
+Your API Key and Secret Key can be obtained from your [App Dashboard](https://docs.kumulos.com/apps/#the-app-dashboard) in your agency console.
 
-In the initialization of Client object, the installation information of the mobile app including an installation ID will be collected and sent to Kumulos server. 
-The installation ID is stored in a file which is located in a persistent and private data directory on device. The ID is generated and stored when initializing the Client object. It will be used when sending installation information and push notification. 
+The first time the Client object is initialized, a unique installation ID is generated and stored in a file located in a persistent and private data directory on the device. This is then uploaded to Kumulos along with other metadata for the app (e.g. version) and the device (e.g. platform, os version etc) for use in analtyics. The unique installation ID will then be retrieved from the persistent storage each time the client object is initialized for sending metadata and push tokens to Kumulos.
 
-## API calls
+# Calling API Methods
 
-The example to make an API call is shown as below.
+Example code to make an API call is shown below:
 
-```
+```language-javascript
 var params = {}
 params.Name = $('#name').val()
 params.Email = $('#email').val()
@@ -64,13 +60,13 @@ params.Password = $('#password').val()
 kumulosClient.call('createCustomer', params)
 ```
 
-## Push Notification 
+# Push Notifications
 
-To receive and handle native push notifications, it is recommend to use [Phonegap-plugin-push](https://github.com/phonegap/phonegap-plugin-push). 
+To receive and handle native push notifications, it is recommend to use [Phonegap-plugin-push](https://github.com/phonegap/phonegap-plugin-push).
 
-The following example will show you how to store push notification token to Kumulos server and track notifications using Phonegap-plugin-push. 
+The following example shows how to upload push token to Kumulos and then track opens using Phonegap-plugin-push.
 
-```   
+```language-javascript   
 var senderId = 'XXXXXXXXXXXX';
 
 var push = window.PushNotification.init({
@@ -104,18 +100,18 @@ push.on('notification', function (data) {
 })
 ```
 
-To remove the token from Kumulos server, please see the example below. 
+To remove the token from Kumulos server, please see the example below.
 ```
 kumulosClient.pushRemoveToken().then(function(response) {
     console.log(response.status);
 }
 ```
-## Contributing
 
-Pull requests are welcome for any improvements you might wish to make. If it's something big and you're not sure about it yet, we'd be happy to discuss it first. You can either file an issue or drop us a line to [support@kumulos.com](mailto:support@kumulos.com).
+# Contributing
 
-## License
+Pull requests are welcome for any improvements you might wish to make. If it's something big and you're not sure about it yet, we'd be happy to discuss it first. You can either file an issue or drop us a line at [support@kumulos.com](mailto:support@kumulos.com).
+
+# License
 
 This project is licensed under the MIT license with portions licensed under the BSD 2-Clause license. See our LICENSE file and individual source files for more information.
-
 
