@@ -13,6 +13,8 @@ The open-source Kumulos SDK is on Github [https://github.com/Kumulos/KumulosSdkC
 The Kumulos SDK can be installed with the following command:
 `cordova plugin add cordova-plugin-kumulos-sdk`
 
+> N.B. The Kumulos Cordova plugin depends on Promises. Please ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime. Frameworks such as Ionic usually include a polyfill default.
+
 # Initialization
 The plugin defines global `window.kumulosSdk` object containing two properties:
 
