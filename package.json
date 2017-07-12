@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-kumulos-sdk",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A cordova plugin to provide SDK library to ease integration with Kumulos' various service APIs with Cordova app. ",
   "cordova": {
     "id": "cordova-plugin-kumulos-sdk",
