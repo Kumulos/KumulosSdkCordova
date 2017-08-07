@@ -1,5 +1,7 @@
 {
   "name": "cordova-plugin-kumulos-sdk",
+  "version": "2.0.2",
+  "types": "./www/kumulos.d.ts",
   "description": "Official Cordova SDK for integrating Kumulos services with your mobile apps",
   "cordova": {
     "id": "cordova-plugin-kumulos-sdk",
