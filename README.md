@@ -10,6 +10,8 @@ cordova plugin add cordova-plugin-kumulos-sdk
 
 > N.B. The Kumulos Cordova plugin depends on Promises. Please ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime.
 
+> N.B. You may also need to add https://*.kumulos.com to the Content-Security-Policy meta tag in your app, for example in www/index.html
+
 After installation, you can now initialize the SDK with:
 
 ```javascript
@@ -27,8 +29,11 @@ ionic cordova plugin add cordova-plugin-kumulos-sdk
 After installation, you can now initialize the SDK with:
 
 ```typescript
+import 'cordova-plugin-kumulos-sdk';
 var client = new kumulosSdk.Client("YOUR_API_KEY", "YOUR_SECRET_KEY");
 ```
+
+> N.B. You may need to add https://*.kumulos.com to the Content-Security-Policy meta tag in your app, for example in www/index.html
 
 For more information on integrating the Cordova SDK with your project, please see the [Kumulos Cordova integration guide](https://docs.kumulos.com/integration/cordova).
 
