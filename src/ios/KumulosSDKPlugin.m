@@ -26,7 +26,9 @@
 
     return @{
              @"iOSTokenType": [self iosTokenType],
-             @"timeZone": [self timeZone]
+             @"timeZone": [self timeZone],
+             @"locale": [self locale],
+             @"bundleId": [self bundleId]
             };
 }
 
@@ -50,6 +52,18 @@
       NSTimeZone *timeZone = [NSTimeZone localTimeZone];
       NSString *tzName = [timeZone name];
       return tzName;
+}
+
+- (NSString*)locale
+{
+    return [[NSLocale preferredLanguages] objectAtIndex:0];
+}
+
+- (NSString*)bundleId
+{
+    NSString *bundle = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+
+    return bundle;
 }
 
 @end

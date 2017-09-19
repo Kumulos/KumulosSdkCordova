@@ -12,6 +12,13 @@ declare namespace kumulosSdk {
         // Initialize with API key and secret key
         constructor(apiKey: string, secretKey: string);
 
+        // Gets the unique Kumulos installation identifier
+        getInstallId(): Promise<string>;
+
+        // Update the coordinates of this install in Kumulos
+        // Accurate location updates are used by geofences
+        sendLocationUpdate(location: {lat: number, lng: number}): Promise<Response>;
+
         // Call an RPC API method
         call(methodName: string, params?: {}): Promise<any>;
         
