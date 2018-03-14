@@ -26,10 +26,21 @@ For more information on integrating the Cordova SDK with your project, please se
 ionic cordova plugin add cordova-plugin-kumulos-sdk
 ```
 
-After installation, you can now initialize the SDK with:
+Next, add the Kumulos type definitions to your `tsconfig.json` file:
+
+```
+{
+...
+  "files": [
+    "plugins/cordova-plugin-kumulos-sdk/www/kumulos.d.ts"
+  ],
+...
+}
+```
+
+Now you can now initialize the SDK with:
 
 ```typescript
-import 'cordova-plugin-kumulos-sdk';
 var client = new kumulosSdk.Client("YOUR_API_KEY", "YOUR_SECRET_KEY");
 ```
 
