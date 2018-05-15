@@ -1,33 +1,31 @@
-/// <reference path="../typings/cordovaPlugins/KumulosSDK.d.ts" />
-
 import 'whatwg-fetch';
 
-import * as Client from '../core/client';
-import * as Enums from '../core/enums';
+import * as Client from './client';
+import * as Enums from './enums';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface PushChannel {
-    uuid:string;
-    name?:string;
-    subscribed:Boolean;
-    meta?:any;
+    uuid: string;
+    name?: string;
+    subscribed: Boolean;
+    meta?: any;
 }
 
 export interface ChannelSpec {
-    uuid:string;
-    subscribe:boolean;
-    meta?:any;
-    name?:string;
-    showInPortal?:boolean;
+    uuid: string;
+    subscribe: boolean;
+    meta?: any;
+    name?: string;
+    showInPortal?: boolean;
 }
 
 export class Push {
 
-    private client : Client.Client;
-    private headers : Headers;
+    private client: Client.Client;
+    private headers: Headers;
 
-    constructor(client : Client.Client, credentials : Client.Credentials) {
+    constructor(client: Client.Client, credentials: Client.Credentials) {
         this.client = client;
         this.headers = new Headers();
         this.headers.append("Authorization", credentials.authString);
@@ -37,28 +35,28 @@ export class Push {
     public pushRemoveToken(): Promise<Response> {
 
         var headers = this.headers;
-        return new Promise<Response> ((resolve, reject) => {
+        return new Promise<Response>((resolve, reject) => {
             this.client.getInstallId()
-            .then((id) => {
-                const url = Enums.PushBaseUrl + `/v1/app-installs/${id}/push-token`;
+                .then((id) => {
+                    const url = Enums.PushBaseUrl + `/v1/app-installs/${id}/push-token`;
 
-                const options = {
-                    method: "DELETE",
-                    headers: headers
-                }
+                    const options = {
+                        method: "DELETE",
+                        headers: headers
+                    }
 
-                resolve(fetch(url, options));
-            })
+                    resolve(fetch(url, options));
+                })
         })
     }
 }
 
 export class PushChannelManager {
 
-    private client : Client.Client;
-    private headers : Headers;
+    private client: Client.Client;
+    private headers: Headers;
 
-    constructor(client : Client.Client, credentials : Client.Credentials) {
+    constructor(client: Client.Client, credentials: Client.Credentials) {
         this.client = client;
         this.headers = new Headers();
         this.headers.append("Authorization", credentials.authString);
@@ -66,21 +64,21 @@ export class PushChannelManager {
         this.headers.append("Accept", "application/json");
     }
 
-    private makeSubscriptionRequest(method : HttpMethod, uuids : string[]) : Promise<Response> {
+    private makeSubscriptionRequest(method: HttpMethod, uuids: string[]): Promise<Response> {
         return this.client.getInstallId()
             .then(installId => {
-                 const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels/subscriptions`;
-                 const params = {
-                     uuids
-                 };
+                const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels/subscriptions`;
+                const params = {
+                    uuids
+                };
 
-                 const options = {
-                     method,
-                     headers: this.headers,
-                     body: JSON.stringify(params)
-                 };
+                const options = {
+                    method,
+                    headers: this.headers,
+                    body: JSON.stringify(params)
+                };
 
-                 return fetch(url, options);
+                return fetch(url, options);
             });
 
     }
@@ -88,14 +86,14 @@ export class PushChannelManager {
     /**
      * Subscribes to the channels given by unique ID
      */
-    subscribe(uuids : string[]) : Promise<Response> {
+    subscribe(uuids: string[]): Promise<Response> {
         return this.makeSubscriptionRequest('POST', uuids);
     }
 
     /**
      * Unsubscribes from the channels given by unique ID
      */
-    unsubscribe(uuids : string[]) : Promise<Response> {
+    unsubscribe(uuids: string[]): Promise<Response> {
         return this.makeSubscriptionRequest('DELETE', uuids);
     }
 
@@ -104,30 +102,30 @@ export class PushChannelManager {
      * 
      * Any other subscriptions will be removed.
      */
-    setSubscriptions(uuids : string[]) : Promise<Response> {
+    setSubscriptions(uuids: string[]): Promise<Response> {
         return this.makeSubscriptionRequest('PUT', uuids);
     }
 
     /**
      * Clears all of the existing installation's channel subscriptions
      */
-    clearSubscriptions() : Promise<Response> {
+    clearSubscriptions(): Promise<Response> {
         return this.setSubscriptions([]);
     }
 
     /**
      * Lists the channels available to this installation along with subscription status
      */
-    listChannels() : Promise<PushChannel[]> {
+    listChannels(): Promise<PushChannel[]> {
         return this.client.getInstallId()
             .then<Response>(installId => {
-                 const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels`;
-                 const options = {
-                     method: 'GET',
-                     headers: this.headers
-                 };
+                const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels`;
+                const options = {
+                    method: 'GET',
+                    headers: this.headers
+                };
 
-                 return fetch(url, options);
+                return fetch(url, options);
             })
             .then(response => {
                 return response.json();
@@ -139,7 +137,7 @@ export class PushChannelManager {
      * 
      * Name is optional, but required if showInPortal is true.
      */
-    createChannel(channelSpec : ChannelSpec) : Promise<PushChannel> {
+    createChannel(channelSpec: ChannelSpec): Promise<PushChannel> {
         if (channelSpec.showInPortal && (!channelSpec.name || !channelSpec.name.length)) {
             return Promise.reject({
                 error: 'Name is required for channel creation when showInPortal is true'

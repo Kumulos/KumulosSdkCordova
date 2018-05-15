@@ -1,6 +1,5 @@
-/// <reference path="../typings/cordovaPlugins/KumulosSDK.d.ts" />
 import 'whatwg-fetch';
-import * as Client from '../core/client';
+import * as Client from './client';
 export interface PushChannel {
     uuid: string;
     name?: string;

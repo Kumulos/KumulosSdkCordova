@@ -1,4 +1,4 @@
-export const generateUUID = ():string => {
+export const generateUUID = (): string => {
     let d = new Date().getTime();
     if (window.performance && typeof window.performance.now === "function") {
         d += performance.now(); //use high-precision timer if available
@@ -24,7 +24,7 @@ export function urlEncodedParams(object, parentKey = null) {
             parts.push(urlEncodedParams(val, key));
             continue;
         }
-        
+
         if (parentKey !== null) {
             encodedKey = `${encodeURIComponent(parentKey)}[${encodeURIComponent(key)}]`;
         }
@@ -40,6 +40,6 @@ export function urlEncodedParams(object, parentKey = null) {
     return parts.join('&');
 }
 
-export const noop = () => {};
+export const noop = () => { };
 export const empty = str => !str || !str.length;
 export const nullOrUndefined = val => val === null || val === undefined;

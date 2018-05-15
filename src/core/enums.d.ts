@@ -8,5 +8,5 @@ export declare enum ResponseCode {
     UNKNOWN_SERVER_ERROR = 64,
     DATABASE_ERROR = 128,
 }
-export declare const PushBaseUrl: string;
-export declare const ClientBaseUrl: string;
+export declare const PushBaseUrl = "https://push.kumulos.com";
+export declare const ClientBaseUrl = "https://api.kumulos.com";
