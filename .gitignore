@@ -1,2 +1,3 @@
 node_modules/
 src/core/**/*.js
+npm-debug.log
