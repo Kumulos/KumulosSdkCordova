@@ -1,69 +1,120 @@
 /********* KumulosSDKPlugin.m Cordova Plugin Implementation *******/
 
 #import <Cordova/CDV.h>
-#import "MobileProvision.h"
+#import <KumulosSDK/KumulosSDK.h>
+@import CoreLocation;
 
 @interface KumulosSDKPlugin : CDVPlugin {
   // Member variables go here.
 }
 
-- (void)getDeviceInfo:(CDVInvokedUrlCommand*)command;
+-(void)initBaseSdk:(CDVInvokedUrlCommand*)command;
+-(void)getInstallId:(CDVInvokedUrlCommand*)command;
+-(void)trackEvent:(CDVInvokedUrlCommand*)command;
+-(void)sendLocationUpdate:(CDVInvokedUrlCommand*)command;
+-(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command;
+-(void)pushStoreToken:(CDVInvokedUrlCommand*)command;
+
 @end
 
 @implementation KumulosSDKPlugin
 
-- (void)getDeviceInfo:(CDVInvokedUrlCommand*)command
-{
-    NSDictionary* deviceProperties = [self deviceProperties];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:deviceProperties];
-
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-
-}
-
-- (NSDictionary*)deviceProperties
-{
-
-    return @{
-             @"iOSTokenType": [self iosTokenType],
-             @"timeZone": [self timeZone],
-             @"locale": [self locale],
-             @"bundleId": [self bundleId]
-            };
-}
-
-- (NSNumber*)iosTokenType
-{
-    NSInteger const KSPushTokenTypeProduction = 1;
-
-    UIApplicationReleaseMode releaseMode = [MobileProvision releaseMode];
+- (void)initBaseSdk:(CDVInvokedUrlCommand*)command {
+    NSString* apiKey = command.arguments[0];
+    NSString* secretKey = command.arguments[1];
+    NSNumber* enableCrashReporting = command.arguments[2];
+    NSDictionary* sdkInfo = command.arguments[3];
+    NSDictionary* runtimeInfo = command.arguments[4];
     
-    if (releaseMode == UIApplicationReleaseAdHoc
-        || releaseMode == UIApplicationReleaseDev
-        || releaseMode == UIApplicationReleaseWildcard) {
-        return @(releaseMode + 1);
+    KSConfig* config = [KSConfig configWithAPIKey:apiKey andSecretKey:secretKey];
+    
+    if ([enableCrashReporting isEqual: @(YES)]) {
+        [config enableCrashReporting];
     }
     
-    return @(KSPushTokenTypeProduction);
+    [config setSdkInfo:sdkInfo];
+    [config setRuntimeInfo:runtimeInfo];
+    
+    [Kumulos initializeWithConfig:config];
+    
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
 }
 
-- (NSString*)timeZone
-{
-      NSTimeZone *timeZone = [NSTimeZone localTimeZone];
-      NSString *tzName = [timeZone name];
-      return tzName;
+- (void)getInstallId:(CDVInvokedUrlCommand*)command {
+    CDVPluginResult* result = [CDVPluginResult
+                               resultWithStatus:CDVCommandStatus_OK
+                               messageAsString: [Kumulos installId]];
+
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
-- (NSString*)locale
-{
-    return [[NSLocale preferredLanguages] objectAtIndex:0];
+-(void)trackEvent:(CDVInvokedUrlCommand *)command {
+    NSString* eventType = command.arguments[0];
+    NSDictionary* properties = command.arguments[1];
+    NSNumber* immediateFlush = command.arguments[2];
+    
+    if ([properties isEqual:[NSNull null]]) {
+        properties = nil;
+    }
+    
+    if ([immediateFlush isEqual:@(NO)]) {
+        [Kumulos.shared trackEvent:eventType withProperties:properties];
+    }
+    else {
+        [Kumulos.shared trackEventImmediately:eventType withProperties:properties];
+    }
+    
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
 }
 
-- (NSString*)bundleId
-{
-    NSString *bundle = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+-(void) sendLocationUpdate:(CDVInvokedUrlCommand *)command {
+    double lat = [command.arguments[0] doubleValue];
+    double lng = [command.arguments[1] doubleValue];
+    
+    CLLocation* location = [[CLLocation alloc] initWithLatitude:lat longitude:lng];
+    [Kumulos.shared sendLocationUpdate:location];
+    
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
 
-    return bundle;
+-(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command {
+    NSString* userIdentifier = command.arguments[0];
+    
+    [Kumulos.shared associateUserWithInstall:userIdentifier];
+    
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)pushStoreToken:(CDVInvokedUrlCommand *)command {
+    NSString* token = command.arguments[0];
+    
+    // Data conversion from https://stackoverflow.com/a/7318062/543200
+    NSMutableData* tokenData = [[NSMutableData alloc] init];
+    
+    unsigned char byte;
+    char byteChars[3] = {'\0','\0','\0'};
+    int i;
+    
+    for (i = 0; i < token.length / 2; i++) {
+        byteChars[0] = [token characterAtIndex:i * 2];
+        byteChars[1] = [token characterAtIndex:(i * 2) + 1];
+        byte = strtol(byteChars, NULL, 16);
+        [tokenData appendBytes:&byte length:1];
+    }
+    
+    [Kumulos.shared pushRegisterWithDeviceToken:tokenData];
+    
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
 }
 
 @end
