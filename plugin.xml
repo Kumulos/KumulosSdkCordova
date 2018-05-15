@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin id="cordova-plugin-kumulos-sdk" version="2.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-kumulos-sdk" version="3.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
 	<name>KumulosSDKPlugin</name>
-	<js-module name="KumulosSDKCore" src="www/kumulos-sdk-core.js">
-		<clobbers target="window.kumulosSdk.core" />
-	</js-module>
+	<js-module name="KumulosSDKCore" src="www/kumulos-sdk-core.js" />
 	<js-module name="KumulosSDK" src="www/kumulos-sdk-plugin.js">
-		<clobbers target="window.kumulosSdk" />
+		<clobbers target="window.Kumulos" />
 	</js-module>
-	<dependency id="cordova-plugin-appversion" />
-	<dependency id="cordova-plugin-device" />
-	<dependency id="cordova-plugin-file" />
 	<platform name="ios">
 		<config-file parent="/*" target="config.xml">
 			<feature name="KumulosSDKPlugin">
 				<param name="ios-package" value="KumulosSDKPlugin" />
 			</feature>
 		</config-file>
-		<header-file src="src/ios/MobileProvision.h" />
-		<source-file src="src/ios/MobileProvision.m" />
 		<source-file src="src/ios/KumulosSDKPlugin.m" />
+		<framework src="KumulosSdkObjectiveC" type="podspec" spec="1.6.3" />
 	</platform>
 	<platform name="android">
 		<config-file parent="/*" target="res/xml/config.xml">
@@ -30,5 +24,6 @@
 		<config-file parent="/*" target="AndroidManifest.xml">
 		</config-file>
 		<source-file src="src/android/KumulosSDKPlugin.java" target-dir="src/com/kumulos/cordova/android" />
+		<framework src="src/android/kumulos.gradle" custom="true" type="gradleReference" />
 	</platform>
 </plugin>
