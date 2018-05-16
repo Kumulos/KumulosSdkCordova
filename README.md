@@ -2,13 +2,16 @@
 
 Kumulos provides tools to build and host backend storage for apps, send push notifications, view audience and behavior analytics, and report on adoption, engagement and performance.
 
+## Prerequisites
+
+- iOS plugion installation requires [CocoaPods](https://cocoapods.org/) (`sudo gem install cocoapods`)
+- The plugin depends on Promises. Ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime [if required](https://caniuse.com/#search=Promise)
+
 ## Get Started with Cordova
 
 ```
 cordova plugin add cordova-plugin-kumulos-sdk
 ```
-
-> N.B. The Kumulos Cordova plugin depends on Promises. Please ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime ([if required](https://caniuse.com/#search=Promise)).
 
 Add https://*.kumulos.com to the `Content-Security-Policy` meta tag in your app, for example in `www/index.html`:
 
