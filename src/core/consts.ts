@@ -6,12 +6,12 @@ export const SdkInfo = {
 
 export const CordovaRuntimeType = 3;
 
-export const NATIVE_MODULE_NAME = 'KumulosSDKPlugin';
+export const NativeModuleName = 'KumulosSDKPlugin';
 
 export const KumulosEvent = {
-    PUSH_OPEN_TRACK: 'k.push.opened',
-    ENGAGE_BEACON_ENTERED_PROXIMITY: 'k.engage.beaconEnteredProximity',
-    ENGAGE_LOCATION_UPDATED: 'k.engage.locationUpdated'
+    PushTrackOpen: 'k.push.opened',
+    EngageBeaconEnteredProximity: 'k.engage.beaconEnteredProximity',
+    EngageLocationUpdated: 'k.engage.locationUpdated'
 };
 
 export const BeaconType = {

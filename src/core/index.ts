@@ -1,6 +1,6 @@
 import * as cordova from 'cordova';
 
-import { BeaconType, CordovaRuntimeType, KumulosEvent, NATIVE_MODULE_NAME, SdkInfo } from './consts';
+import { BeaconType, CordovaRuntimeType, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
@@ -46,7 +46,7 @@ const Kumulos = {
             version: cordova.version
         });
 
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'initBaseSdk', args);
+        cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
     },
@@ -86,14 +86,14 @@ const Kumulos = {
      * @param {string} token - the push token from FCM or APNS
      */
     pushStoreToken: (token: string) => {
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'pushStoreToken', [token]);
+        cordova.exec(noop, noop, NativeModuleName, 'pushStoreToken', [token]);
     },
     /**
      * Tracks a conversion event for a given push notification ID
      * @param {string} notificationId - the notification uuid
      */
     pushTrackOpen: (notificationId: string) => {
-        Kumulos.trackEvent(KumulosEvent.PUSH_OPEN_TRACK, {
+        Kumulos.trackEvent(KumulosEvent.PushTrackOpen, {
             id: notificationId
         });
     },
@@ -106,7 +106,7 @@ const Kumulos = {
      * @param {object} properties - Optional additional information about the event
      */
     trackEvent: (eventType: string, properties: {} = null) => {
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'trackEvent', [
+        cordova.exec(noop, noop, NativeModuleName, 'trackEvent', [
             eventType,
             properties,
             false
@@ -121,7 +121,7 @@ const Kumulos = {
      * @param {object} properties - Optional additional information about the event
      */
     trackEventImmediately: (eventType: string, properties: {} = null) => {
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'trackEvent', [
+        cordova.exec(noop, noop, NativeModuleName, 'trackEvent', [
             eventType,
             properties,
             true
@@ -133,7 +133,7 @@ const Kumulos = {
      * @param {object} location - the coordinates of the device
      */
     sendLocationUpdate: (location: { lat: number, lng: number }) => {
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'sendLocationUpdate', [
+        cordova.exec(noop, noop, NativeModuleName, 'sendLocationUpdate', [
             location.lat,
             location.lng
         ]);
@@ -143,14 +143,14 @@ const Kumulos = {
      * @param {string} userIdentifier - the unique user ID
      */
     associateUserWithInstall: (userIdentifier: string) => {
-        cordova.exec(noop, noop, NATIVE_MODULE_NAME, 'associateUserWithInstall', [userIdentifier]);
+        cordova.exec(noop, noop, NativeModuleName, 'associateUserWithInstall', [userIdentifier]);
     },
     /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.
      * @param {object} beacon - eddystone beacon information
      */
     trackEddystoneBeaconProximity: (beacon: { namespaceHex: string, instanceHex: string, distanceMetres?: number }) => {
-        Kumulos.trackEventImmediately(KumulosEvent.ENGAGE_BEACON_ENTERED_PROXIMITY, {
+        Kumulos.trackEventImmediately(KumulosEvent.EngageBeaconEnteredProximity, {
             type: BeaconType.Eddystone,
             ...beacon
         });
@@ -160,7 +160,7 @@ const Kumulos = {
      * @param {object} beacon - iBeacon beacon information
      */
     trackiBeaconProximity: (beacon: { uuid: string, major: number, minor: number, proximity?: number }) => {
-        Kumulos.trackEventImmediately(KumulosEvent.ENGAGE_BEACON_ENTERED_PROXIMITY, {
+        Kumulos.trackEventImmediately(KumulosEvent.EngageBeaconEnteredProximity, {
             type: BeaconType.iBeacon,
             ...beacon
         });

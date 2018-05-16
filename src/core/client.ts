@@ -6,7 +6,7 @@ import * as cordova from 'cordova';
 
 import { empty, generateUUID, urlEncodedParams } from './util';
 
-import { NATIVE_MODULE_NAME } from './consts';
+import { NativeModuleName } from './consts';
 
 export class Client {
 
@@ -24,7 +24,7 @@ export class Client {
 
     public getInstallId(): Promise<string> {
         return new Promise((resolve, reject) => {
-            cordova.exec(resolve, reject, NATIVE_MODULE_NAME, 'getInstallId', []);
+            cordova.exec(resolve, reject, NativeModuleName, 'getInstallId', []);
         });
     }
 
