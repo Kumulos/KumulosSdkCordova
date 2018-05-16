@@ -1,90 +1,169 @@
 package com.kumulos.cordova.android;
 
-import android.os.Build;
-import org.apache.cordova.CordovaPlugin;
+import android.app.Application;
+import android.location.Location;
+
+import com.kumulos.android.Installation;
+import com.kumulos.android.Kumulos;
+import com.kumulos.android.KumulosConfig;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Locale;
-import java.util.TimeZone;
-
 public class KumulosSDKPlugin extends CordovaPlugin {
+
+    private static final String ACTION_INIT = "initBaseSdk";
+    private static final String ACTION_GET_INSTALL_ID = "getInstallId";
+    private static final String ACTION_TRACK_EVENT = "trackEvent";
+    private static final String ACTION_SEND_LOCATION_UPDATE = "sendLocationUpdate";
+    private static final String ACTION_ASSOCIATE_USER = "associateUserWithInstall";
+    private static final String ACTION_PUSH_STORE_TOKEN = "pushStoreToken";
+
+    private static final String EVENT_TYPE_PUSH_DEVICE_REGISTERED = "k.push.deviceRegistered";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("getDeviceInfo")) {
-            this.getDeviceInfo(callbackContext);
-            return true;
+        switch (action) {
+            case ACTION_INIT:
+                this.initBaseSdk(args, callbackContext);
+                return true;
+            case ACTION_GET_INSTALL_ID:
+                this.getInstallId(callbackContext);
+                return true;
+            case ACTION_TRACK_EVENT:
+                this.trackEvent(args, callbackContext);
+                return true;
+            case ACTION_SEND_LOCATION_UPDATE:
+                this.sendLocationUpdate(args, callbackContext);
+                return true;
+            case ACTION_ASSOCIATE_USER:
+                this.associateUser(args, callbackContext);
+                return true;
+            case ACTION_PUSH_STORE_TOKEN:
+                this.pushStoreToken(args, callbackContext);
+                return true;
+            default:
+                return false;
         }
-        return false;
     }
 
-    private void getDeviceInfo(CallbackContext callbackContext) {
-        JSONObject result = new JSONObject();
+    private void pushStoreToken(JSONArray args, CallbackContext callbackContext) {
+        JSONObject props = new JSONObject();
+
         try {
-            result.put("bundleId", this.cordova.getActivity().getPackageName());
-            result.put("locale", this.getDeviceLocale());
-            result.put("timeZone", TimeZone.getDefault().getID());
-            callbackContext.success(result);
+            props.put("type", 2);
+            props.put("token", args.getString(0));
         } catch (JSONException e) {
+            e.printStackTrace();
             callbackContext.error(e.getMessage());
+            return;
         }
+
+        Kumulos.trackEventImmediately(this.cordova.getContext(), EVENT_TYPE_PUSH_DEVICE_REGISTERED, props);
+
+        callbackContext.success();
     }
 
-     // https://stackoverflow.com/a/33970189
-    private String getDeviceLocale() {
-        Locale loc = Locale.getDefault();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return loc.toLanguageTag();
+    private void associateUser(JSONArray args, CallbackContext callbackContext) {
+        String userId;
+
+        try {
+            userId = args.getString(0);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
         }
 
-        // we will use a dash as per BCP 47
-        final char SEP = '-';
-        String language = loc.getLanguage();
-        String region = loc.getCountry();
-        String variant = loc.getVariant();
+        Kumulos.associateUserWithInstall(this.cordova.getContext(), userId);
 
-        // special case for Norwegian Nynorsk since "NY" cannot be a variant as per BCP 47
-        // this goes before the string matching since "NY" wont pass the variant checks
-        if (language.equals("no") && region.equals("NO") && variant.equals("NY")) {
-            language = "nn";
-            region = "NO";
-            variant = "";
+        callbackContext.success();
+    }
+
+    private void sendLocationUpdate(JSONArray args, CallbackContext callbackContext) {
+        Location location = new Location("");
+
+        try {
+            location.setLatitude(args.getDouble(0));
+            location.setLongitude(args.getDouble(1));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
         }
 
-        if (language.isEmpty() || !language.matches("\\p{Alpha}{2,8}")) {
-            language = "und";       // Follow the Locale#toLanguageTag() implementation
-            // which says to return "und" for Undetermined
-        } else if (language.equals("iw")) {
-            language = "he";        // correct deprecated "Hebrew"
-        } else if (language.equals("in")) {
-            language = "id";        // correct deprecated "Indonesian"
-        } else if (language.equals("ji")) {
-            language = "yi";        // correct deprecated "Yiddish"
+        Kumulos.sendLocationUpdate(this.cordova.getContext(), location);
+
+        callbackContext.success();
+    }
+
+    private void trackEvent(JSONArray args, CallbackContext callbackContext) {
+        String eventType;
+        JSONObject props;
+        boolean immediateFlush;
+
+        try {
+            eventType = args.getString(0);
+            props = args.optJSONObject(1);
+            immediateFlush = args.getBoolean(2);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
         }
 
-        // ensure valid country code, if not well formed, it's omitted
-        if (!region.matches("\\p{Alpha}{2}|\\p{Digit}{3}")) {
-            region = "";
+        if (immediateFlush) {
+            Kumulos.trackEventImmediately(this.cordova.getContext(), eventType, props);
+        }
+        else {
+            Kumulos.trackEvent(this.cordova.getContext(), eventType, props);
         }
 
-        // variant subtags that begin with a letter must be at least 5 characters long
-        if (!variant.matches("\\p{Alnum}{5,8}|\\p{Digit}\\p{Alnum}{3}")) {
-            variant = "";
+        callbackContext.success();
+    }
+
+    private void initBaseSdk(JSONArray args, CallbackContext callbackContext) {
+        final String apiKey;
+        final String secretKey;
+        final boolean enableCrashReporting;
+        final JSONObject sdkInfo;
+        final JSONObject runtimeInfo;
+
+        try {
+            apiKey = args.getString(0);
+            secretKey = args.getString(1);
+            enableCrashReporting = args.getBoolean(2);
+            sdkInfo = args.getJSONObject(3);
+            runtimeInfo = args.getJSONObject(4);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
         }
 
-        StringBuilder bcp47Tag = new StringBuilder(language);
-        if (!region.isEmpty()) {
-            bcp47Tag.append(SEP).append(region);
-        }
-        if (!variant.isEmpty()) {
-            bcp47Tag.append(SEP).append(variant);
+        KumulosConfig.Builder configBuilder = new KumulosConfig.Builder(apiKey, secretKey);
+
+        if (enableCrashReporting) {
+            configBuilder.enableCrashReporting();
         }
 
-        return bcp47Tag.toString();
+        configBuilder.setSdkInfo(sdkInfo);
+        configBuilder.setRuntimeInfo(runtimeInfo);
+
+        Application application = this.cordova.getActivity().getApplication();
+        KumulosConfig config = configBuilder.build();
+
+        Kumulos.initialize(application, config);
+
+        callbackContext.success();
+    }
+
+    private void getInstallId(CallbackContext callbackContext) {
+        String id = Installation.id(this.cordova.getContext());
+        callbackContext.success(id);
     }
 
 }
