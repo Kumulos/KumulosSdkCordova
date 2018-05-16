@@ -22,6 +22,7 @@ declare const Kumulos: {
     trackEddystoneBeaconProximity: (beacon: {
         namespaceHex: string;
         instanceHex: string;
+        distanceMetres?: number;
     }) => void;
     trackiBeaconProximity: (beacon: {
         uuid: string;
