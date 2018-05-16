@@ -8,14 +8,21 @@ Kumulos provides tools to build and host backend storage for apps, send push not
 cordova plugin add cordova-plugin-kumulos-sdk
 ```
 
-> N.B. The Kumulos Cordova plugin depends on Promises. Please ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime.
+> N.B. The Kumulos Cordova plugin depends on Promises. Please ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime ([if required](https://caniuse.com/#search=Promise)).
 
-> N.B. You may also need to add https://*.kumulos.com to the Content-Security-Policy meta tag in your app, for example in www/index.html
+Add https://*.kumulos.com to the `Content-Security-Policy` meta tag in your app, for example in `www/index.html`:
+
+```html
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:; connect-src 'self' https://*.kumulos.com;">
+```
 
 After installation, you can now initialize the SDK with:
 
 ```javascript
-var client = new kumulosSdk.Client("YOUR_API_KEY", "YOUR_SECRET_KEY");
+Kumulos.initialize({
+    apiKey: 'YOUR_API_KEY',
+    secretKey: 'YOUR_SECRET_KEY'
+});
 ```
 
 For more information on integrating the Cordova SDK with your project, please see the [Kumulos Cordova integration guide](https://docs.kumulos.com/integration/cordova).
@@ -32,7 +39,7 @@ Next, add the Kumulos type definitions to your `tsconfig.json` file:
 {
 ...
   "files": [
-    "plugins/cordova-plugin-kumulos-sdk/www/kumulos.d.ts"
+    "node_modules/cordova-plugin-kumulos-sdk/index.d.ts"
   ],
 ...
 }
@@ -41,10 +48,13 @@ Next, add the Kumulos type definitions to your `tsconfig.json` file:
 Now you can now initialize the SDK with:
 
 ```typescript
-var client = new kumulosSdk.Client("YOUR_API_KEY", "YOUR_SECRET_KEY");
+Kumulos.initialize({
+    apiKey: 'YOUR_API_KEY',
+    secretKey: 'YOUR_SECRET_KEY'
+});
 ```
 
-> N.B. You may need to add https://*.kumulos.com to the Content-Security-Policy meta tag in your app, for example in www/index.html
+> N.B. You may need to add `connect-src 'self' https://*.kumulos.com;` to the `Content-Security-Policy` meta tag in your app in `www/index.html`
 
 For more information on integrating the Cordova SDK with your project, please see the [Kumulos Cordova integration guide](https://docs.kumulos.com/integration/cordova).
 
