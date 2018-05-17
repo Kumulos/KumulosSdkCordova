@@ -8,8 +8,10 @@ export declare const KumulosEvent: {
     PushTrackOpen: string;
     EngageBeaconEnteredProximity: string;
     EngageLocationUpdated: string;
+    CrashCaughtException: string;
 };
 export declare const BeaconType: {
     iBeacon: number;
     Eddystone: number;
 };
+export declare const CrashReportFormat = "raven";

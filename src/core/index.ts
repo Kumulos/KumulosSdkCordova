@@ -1,6 +1,6 @@
 import * as cordova from 'cordova';
 
-import { BeaconType, CordovaRuntimeType, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
+import { BeaconType, CordovaRuntimeType, CrashReportFormat, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
@@ -13,6 +13,7 @@ export interface KumulosConfig {
 }
 
 let clientInstance: Client = null;
+let raven: any = null;
 
 const Kumulos = {
     /**
@@ -49,6 +50,19 @@ const Kumulos = {
         cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
+
+        if (config.enableCrashReporting) {
+            import(/* webpackChunkName: "raven-js" */ 'raven-js').then(Raven => {
+                raven = Raven.default.config(`https://nokey@crash.kumulos.com/raven`, {
+                    transport: (report) => {
+                        Kumulos.trackEvent(KumulosEvent.CrashLoggedException, {
+                            type: CrashReportFormat,
+                            data: report.data
+                        });
+                    }
+                }).install();
+            });
+        }
     },
     /**
      * Get the Kumulos installation ID
@@ -56,6 +70,10 @@ const Kumulos = {
      */
     getInstallId: (): Promise<string> => {
         return clientInstance.getInstallId();
+    },
+
+    logException: (e) => {
+        raven && raven.captureException(e);
     },
     
     /**
