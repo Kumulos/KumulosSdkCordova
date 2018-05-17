@@ -8,7 +8,7 @@ export declare const KumulosEvent: {
     PushTrackOpen: string;
     EngageBeaconEnteredProximity: string;
     EngageLocationUpdated: string;
-    CrashCaughtException: string;
+    CrashLoggedException: string;
 };
 export declare const BeaconType: {
     iBeacon: number;

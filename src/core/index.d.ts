@@ -7,7 +7,7 @@ export interface KumulosConfig {
 declare const Kumulos: {
     initialize: (config: KumulosConfig) => void;
     getInstallId: () => Promise<string>;
-    recordException: (err: any) => void;
+    logException: (e: any) => void;
     call: <T>(methodName: string, params?: {}) => Promise<T>;
     getPushSubscriptionManager: () => PushChannelManager;
     pushRemoveToken: () => Promise<Response>;
