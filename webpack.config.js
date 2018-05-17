@@ -1,17 +1,21 @@
 // webpack.config.js
 module.exports = {
+    mode: 'development',
     entry: "./src/core/index.js",
     externals: {
       cordova: 'cordova'
     },
     output: {
-        path: "www/",
+        path: __dirname + "/www/",
         filename: "kumulos-sdk-core.js",
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'commonjs2',
+        chunkFilename: '[name].bundle.js',
+        jsonpFunction: 'ks_wpJsonp',
+        publicPath: 'plugins/cordova-plugin-kumulos-sdk/www/'
     },
     module: {
-      loaders: [
-        { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader"}
+      rules: [
+        { test: /\.js$/, exclude: /node_modules/, use: [{loader: "babel-loader"}]}
       ]
     }
 };
