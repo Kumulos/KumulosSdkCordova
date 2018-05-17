@@ -54,8 +54,8 @@ const Kumulos = {
         if (config.enableCrashReporting) {
             const transport = (report) => {
                 Kumulos.trackEvent(KumulosEvent.CrashLoggedException, {
-                    type: CrashReportFormat,
-                    payload: report.data
+                    format: CrashReportFormat,
+                    report: report.data
                 });
 
                 report.onSuccess();
