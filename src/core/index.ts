@@ -1,6 +1,6 @@
 import * as cordova from 'cordova';
 
-import { BeaconType, CordovaRuntimeType, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
+import { BeaconType, CordovaRuntimeType, CrashReportFormat, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
@@ -13,6 +13,7 @@ export interface KumulosConfig {
 }
 
 let clientInstance: Client = null;
+let ravenInstance: any = null;
 
 const Kumulos = {
     /**
@@ -49,6 +50,27 @@ const Kumulos = {
         cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
+
+        if (config.enableCrashReporting) {
+            const transport = (report) => {
+                Kumulos.trackEvent(KumulosEvent.CrashLoggedException, {
+                    format: CrashReportFormat,
+                    report: report.data
+                });
+
+                report.onSuccess();
+            };
+
+            import(/* webpackChunkName: "raven-js" */ 'raven-js')
+                .then(Raven => {
+                    ravenInstance = Raven.default.config('https://nokey@crash.kumulos.com/raven', {
+                        transport
+                    });
+
+                    ravenInstance.install();
+                })
+                .catch(e => console.error(e));
+        }
     },
     /**
      * Get the Kumulos installation ID
@@ -56,6 +78,41 @@ const Kumulos = {
      */
     getInstallId: (): Promise<string> => {
         return clientInstance.getInstallId();
+    },
+
+    /**
+     * Logs an exception to the Kumulos Crash reporting service
+     * 
+     * Use this method to record unexpected application state
+     */
+    logException: (e, context: {} = {}) => {
+        if (!ravenInstance) {
+            console.log('Crash reporting has not been enabled, ignoring exception:');
+            console.error(e);
+            return;
+        }
+        
+        ravenInstance.captureException(e, {
+            uncaught: false,
+            extra: context
+        });
+    },
+
+    /**
+     * Logs an uncaught exception to the Kumulos Crash reporting service
+     * 
+     * Use this method to forward exceptions from other error handlers.
+     */
+    logUncaughtException: (e) => {
+        if (!ravenInstance) {
+            console.log('Crash reporting has not been enabled, ignoring exception:');
+            console.error(e);
+            return;
+        }
+        
+        ravenInstance.captureException(e, {
+            uncaught: true
+        });
     },
     
     /**
