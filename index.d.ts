@@ -102,6 +102,20 @@ interface KumulosSdk {
     trackEventImmediately: (eventType: string, properties?: {}) => void;
 
     /**
+     * Logs an exception to the Kumulos Crash reporting service
+     * 
+     * Use this method to record unexpected application state
+     */
+    logException: (e: any, context?: {}) => void;
+
+    /**
+     * Logs an uncaught exception to the Kumulos Crash reporting service
+     * 
+     * Use this method to forward exceptions from other error handlers.
+     */
+    logUncaughtException: (e: any) => void;
+
+    /**
      * Updates the location of the current installation in Kumulos
      * Accurate locaiton information is used for geofencing
      */
