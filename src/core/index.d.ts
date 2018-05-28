@@ -3,6 +3,7 @@ export interface KumulosConfig {
     apiKey: string;
     secretKey: string;
     enableCrashReporting?: boolean;
+    sourceMapTag?: string;
 }
 declare const Kumulos: {
     initialize: (config: KumulosConfig) => void;
