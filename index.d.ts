@@ -48,7 +48,15 @@ interface PushChannelManager {
 interface KumulosConfig {
     apiKey: string;
     secretKey: string;
+    /**
+     * Turn crash reporting on (defaults to false)
+     */
     enableCrashReporting?: boolean;
+    /**
+     * A version identifier for minified source maps you upload
+     * used in JS error reporting source mapping
+     */
+    sourceMapTag?: string;
 }
 
 interface KumulosSdk {

@@ -4,7 +4,7 @@ Kumulos provides tools to build and host backend storage for apps, send push not
 
 ## Prerequisites
 
-- iOS plugion installation requires [CocoaPods](https://cocoapods.org/) (`sudo gem install cocoapods`)
+- iOS plugin installation requires [CocoaPods](https://cocoapods.org/) (`sudo gem install cocoapods`)
 - The plugin depends on Promises. Ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime [if required](https://caniuse.com/#search=Promise)
 
 ## Get Started with Cordova

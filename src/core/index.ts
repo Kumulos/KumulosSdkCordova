@@ -10,6 +10,7 @@ export interface KumulosConfig {
     apiKey: string;
     secretKey: string;
     enableCrashReporting?: boolean;
+    sourceMapTag?: string;
 }
 
 let clientInstance: Client = null;
@@ -63,9 +64,17 @@ const Kumulos = {
 
             import(/* webpackChunkName: "raven-js" */ 'raven-js')
                 .then(Raven => {
-                    ravenInstance = Raven.default.config('https://nokey@crash.kumulos.com/raven', {
+                    // TODO typehinting as RavenOptions would be best but we can't
+                    // see the type without static import so defeats points of import()
+                    let ravenOpts: any = {
                         transport
-                    });
+                    };
+
+                    if (config.sourceMapTag) {
+                        ravenOpts.release = config.sourceMapTag;
+                    }
+
+                    ravenInstance = Raven.default.config('https://nokey@crash.kumulos.com/raven', ravenOpts);
 
                     ravenInstance.install();
                 })
@@ -91,7 +100,7 @@ const Kumulos = {
             console.error(e);
             return;
         }
-        
+
         ravenInstance.captureException(e, {
             uncaught: false,
             extra: context
@@ -109,12 +118,12 @@ const Kumulos = {
             console.error(e);
             return;
         }
-        
+
         ravenInstance.captureException(e, {
             uncaught: true
         });
     },
-    
+
     /**
      * Make an RPC call to a Backend API method
      * @param {string} methodName - Method alias to call
