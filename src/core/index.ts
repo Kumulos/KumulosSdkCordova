@@ -15,6 +15,7 @@ export interface KumulosConfig {
 
 let clientInstance: Client = null;
 let ravenInstance: any = null;
+let initialized: boolean = false;
 
 const Kumulos = {
     /**
@@ -23,6 +24,11 @@ const Kumulos = {
      * @param {KumulosConfig} config - configuration for the client
      */
     initialize: (config: KumulosConfig) => {
+        if (initialized) {
+            console.error('Kumulos.initialize has already been called, aborting...');
+            return;
+        }
+        
         if (empty(config.apiKey) || empty(config.secretKey)) {
             throw "API key and secret key are required options!";
         }
@@ -49,6 +55,11 @@ const Kumulos = {
         });
 
         cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
+        
+        // Native app foreground watchers miss the initial foreground as we 
+        // init from the JS webview after loading all the native chrome so
+        // we track foregrounds from here instead
+        Kumulos.trackEvent(KumulosEvent.AppForegrounded);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
 
@@ -80,6 +91,8 @@ const Kumulos = {
                 })
                 .catch(e => console.error(e));
         }
+
+        initialized = true;
     },
     /**
      * Get the Kumulos installation ID

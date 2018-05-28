@@ -1,7 +1,7 @@
 
 export const SdkInfo = {
     id: 6,
-    version: '3.1.0'
+    version: '3.1.1'
 };
 
 export const CordovaRuntimeType = 3;
@@ -9,6 +9,7 @@ export const CordovaRuntimeType = 3;
 export const NativeModuleName = 'KumulosSDKPlugin';
 
 export const KumulosEvent = {
+    AppForegrounded: 'k.fg',
     PushTrackOpen: 'k.push.opened',
     EngageBeaconEnteredProximity: 'k.engage.beaconEnteredProximity',
     EngageLocationUpdated: 'k.engage.locationUpdated',

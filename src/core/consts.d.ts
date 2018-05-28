@@ -5,6 +5,7 @@ export declare const SdkInfo: {
 export declare const CordovaRuntimeType = 3;
 export declare const NativeModuleName = "KumulosSDKPlugin";
 export declare const KumulosEvent: {
+    AppForegrounded: string;
     PushTrackOpen: string;
     EngageBeaconEnteredProximity: string;
     EngageLocationUpdated: string;
