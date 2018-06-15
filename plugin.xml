@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin id="cordova-plugin-kumulos-sdk" version="3.1.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-kumulos-sdk" version="3.1.2" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
 	<name>KumulosSDKPlugin</name>
 	<asset src="www/vendors~raven-js.bundle.js" target="plugins/cordova-plugin-kumulos-sdk/www/vendors~raven-js.bundle.js" />
 	<js-module name="KumulosSDKCore" src="www/kumulos-sdk-core.js" />
