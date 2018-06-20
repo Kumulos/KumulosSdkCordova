@@ -13,9 +13,30 @@ export interface KumulosConfig {
     sourceMapTag?: string;
 }
 
+let currentConfig: KumulosConfig = null;
 let clientInstance: Client = null;
-let ravenInstance: any = null;
 let initialized: boolean = false;
+
+let ravenInstance: any = null;
+let exceptionsDuringInit = [];
+
+function logException(e, uncaught: boolean, context: {} = undefined) {
+    if (!initialized || !currentConfig.enableCrashReporting) {
+        console.log('Crash reporting has not been enabled, ignoring exception:');
+        console.error(e);
+        return;
+    }
+
+    if (!ravenInstance) {
+        exceptionsDuringInit.push([e, uncaught, context]);
+        return;
+    }
+
+    ravenInstance.captureException(e, {
+        uncaught,
+        extra: context
+    });
+}
 
 const Kumulos = {
     /**
@@ -62,6 +83,7 @@ const Kumulos = {
         Kumulos.trackEvent(KumulosEvent.AppForegrounded);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
+        currentConfig = config;
 
         if (config.enableCrashReporting) {
             const transport = (report) => {
@@ -88,12 +110,16 @@ const Kumulos = {
                     ravenInstance = Raven.default.config('https://nokey@crash.kumulos.com/raven', ravenOpts);
 
                     ravenInstance.install();
+
+                    exceptionsDuringInit.forEach(args => logException.apply(this, args));
+                    exceptionsDuringInit = [];
                 })
                 .catch(e => console.error(e));
         }
 
         initialized = true;
     },
+
     /**
      * Get the Kumulos installation ID
      * @returns {Promise<string>} - the install ID
@@ -108,16 +134,7 @@ const Kumulos = {
      * Use this method to record unexpected application state
      */
     logException: (e, context: {} = {}) => {
-        if (!ravenInstance) {
-            console.log('Crash reporting has not been enabled, ignoring exception:');
-            console.error(e);
-            return;
-        }
-
-        ravenInstance.captureException(e, {
-            uncaught: false,
-            extra: context
-        });
+        logException(e, false, context);
     },
 
     /**
@@ -126,15 +143,7 @@ const Kumulos = {
      * Use this method to forward exceptions from other error handlers.
      */
     logUncaughtException: (e) => {
-        if (!ravenInstance) {
-            console.log('Crash reporting has not been enabled, ignoring exception:');
-            console.error(e);
-            return;
-        }
-
-        ravenInstance.captureException(e, {
-            uncaught: true
-        });
+        logException(e, true);
     },
 
     /**
