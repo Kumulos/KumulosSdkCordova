@@ -41,7 +41,7 @@ function logException(e, uncaught: boolean, context: {} = undefined) {
 const Kumulos = {
     /**
      * Used to configure the Kumulos class. Only needs to be called once per process
-     * 
+     *
      * @param {KumulosConfig} config - configuration for the client
      */
     initialize: (config: KumulosConfig) => {
@@ -49,7 +49,7 @@ const Kumulos = {
             console.error('Kumulos.initialize has already been called, aborting...');
             return;
         }
-        
+
         if (empty(config.apiKey) || empty(config.secretKey)) {
             throw "API key and secret key are required options!";
         }
@@ -76,8 +76,8 @@ const Kumulos = {
         });
 
         cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
-        
-        // Native app foreground watchers miss the initial foreground as we 
+
+        // Native app foreground watchers miss the initial foreground as we
         // init from the JS webview after loading all the native chrome so
         // we track foregrounds from here instead
         Kumulos.trackEvent(KumulosEvent.AppForegrounded);
@@ -130,7 +130,7 @@ const Kumulos = {
 
     /**
      * Logs an exception to the Kumulos Crash reporting service
-     * 
+     *
      * Use this method to record unexpected application state
      */
     logException: (e, context: {} = {}) => {
@@ -139,7 +139,7 @@ const Kumulos = {
 
     /**
      * Logs an uncaught exception to the Kumulos Crash reporting service
-     * 
+     *
      * Use this method to forward exceptions from other error handlers.
      */
     logUncaughtException: (e) => {
@@ -189,7 +189,7 @@ const Kumulos = {
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.
-     * 
+     *
      * @param {string} eventType - Identifier for the event category
      * @param {object} properties - Optional additional information about the event
      */
@@ -204,7 +204,7 @@ const Kumulos = {
      * Tracks a custom analytics event with Kumulos.
      *
      * After being recorded locally, all stored events will be flushed to the server.
-     * 
+     *
      * @param {string} eventType - Identifier for the event category
      * @param {object} properties - Optional additional information about the event
      */
@@ -229,9 +229,10 @@ const Kumulos = {
     /**
      * Associates a user identifier with the current Kumulos installation record.
      * @param {string} userIdentifier - the unique user ID
+     * @param {object} attributes - optional attributes to set for the user (will overwrite any existing attributes)
      */
-    associateUserWithInstall: (userIdentifier: string) => {
-        cordova.exec(noop, noop, NativeModuleName, 'associateUserWithInstall', [userIdentifier]);
+    associateUserWithInstall: (userIdentifier: string, attributes: {} = null) => {
+        cordova.exec(noop, noop, NativeModuleName, 'associateUserWithInstall', [userIdentifier, attributes]);
     },
     /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.
