@@ -84,7 +84,7 @@ interface KumulosSdk {
      * Unsubscribe from push by removing the token associated with this installation
      */
     pushRemoveToken: () => Promise<Response>;
-    
+
     /**
      * Associates the given push token with this installation in Kumulos
      */
@@ -111,14 +111,14 @@ interface KumulosSdk {
 
     /**
      * Logs an exception to the Kumulos Crash reporting service
-     * 
+     *
      * Use this method to record unexpected application state
      */
     logException: (e: any, context?: {}) => void;
 
     /**
      * Logs an uncaught exception to the Kumulos Crash reporting service
-     * 
+     *
      * Use this method to forward exceptions from other error handlers.
      */
     logUncaughtException: (e: any) => void;
@@ -134,8 +134,10 @@ interface KumulosSdk {
 
     /**
      * Associates a user identifier with the current Kumulos installation record.
+     *
+     * If attributes are provided, will also set attributes for this user
      */
-    associateUserWithInstall: (userIdentifier: string) => void;
+    associateUserWithInstall: (userIdentifier: string, attributes?: {}) => void;
 
     /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.
