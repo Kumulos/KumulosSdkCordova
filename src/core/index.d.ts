@@ -21,7 +21,7 @@ declare const Kumulos: {
         lat: number;
         lng: number;
     }) => void;
-    associateUserWithInstall: (userIdentifier: string) => void;
+    associateUserWithInstall: (userIdentifier: string, attributes?: {}) => void;
     trackEddystoneBeaconProximity: (beacon: {
         namespaceHex: string;
         instanceHex: string;

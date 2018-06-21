@@ -69,16 +69,23 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
     private void associateUser(JSONArray args, CallbackContext callbackContext) {
         String userId;
+        JSONObject attributes;
 
         try {
             userId = args.getString(0);
+            attributes = args.optJSONObject(1);
         } catch (JSONException e) {
             e.printStackTrace();
             callbackContext.error(e.getMessage());
             return;
         }
 
-        Kumulos.associateUserWithInstall(this.cordova.getContext(), userId);
+        if (null == attributes) {
+            Kumulos.associateUserWithInstall(this.cordova.getContext(), userId);
+        }
+        else {
+            Kumulos.associateUserWithInstall(this.cordova.getContext(), userId, attributes);
+        }
 
         callbackContext.success();
     }
