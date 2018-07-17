@@ -1,7 +1,6 @@
-
 export const SdkInfo = {
     id: 6,
-    version: '3.1.2'
+    version: '3.1.3'
 };
 
 export const CordovaRuntimeType = 3;
