@@ -1,6 +1,13 @@
 import * as cordova from 'cordova';
 
-import { BeaconType, CordovaRuntimeType, CrashReportFormat, KumulosEvent, NativeModuleName, SdkInfo } from './consts';
+import {
+    BeaconType,
+    CordovaRuntimeType,
+    CrashReportFormat,
+    KumulosEvent,
+    NativeModuleName,
+    SdkInfo
+} from './consts';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
@@ -22,7 +29,9 @@ let exceptionsDuringInit = [];
 
 function logException(e, uncaught: boolean, context: {} = undefined) {
     if (!initialized || !currentConfig.enableCrashReporting) {
-        console.log('Crash reporting has not been enabled, ignoring exception:');
+        console.log(
+            'Crash reporting has not been enabled, ignoring exception:'
+        );
         console.error(e);
         return;
     }
@@ -46,23 +55,21 @@ const Kumulos = {
      */
     initialize: (config: KumulosConfig) => {
         if (initialized) {
-            console.error('Kumulos.initialize has already been called, aborting...');
+            console.error(
+                'Kumulos.initialize has already been called, aborting...'
+            );
             return;
         }
 
         if (empty(config.apiKey) || empty(config.secretKey)) {
-            throw "API key and secret key are required options!";
+            throw 'API key and secret key are required options!';
         }
 
-        let args: any[] = [
-            config.apiKey,
-            config.secretKey
-        ];
+        let args: any[] = [config.apiKey, config.secretKey];
 
         if (nullOrUndefined(config.enableCrashReporting)) {
             args.push(false);
-        }
-        else {
+        } else {
             args.push(config.enableCrashReporting);
         }
 
@@ -86,7 +93,7 @@ const Kumulos = {
         currentConfig = config;
 
         if (config.enableCrashReporting) {
-            const transport = (report) => {
+            const transport = report => {
                 Kumulos.trackEvent(KumulosEvent.CrashLoggedException, {
                     format: CrashReportFormat,
                     report: report.data
@@ -107,11 +114,16 @@ const Kumulos = {
                         ravenOpts.release = config.sourceMapTag;
                     }
 
-                    ravenInstance = Raven.default.config('https://nokey@crash.kumulos.com/raven', ravenOpts);
+                    ravenInstance = Raven.default.config(
+                        'https://nokey@crash.kumulos.com/raven',
+                        ravenOpts
+                    );
 
                     ravenInstance.install();
 
-                    exceptionsDuringInit.forEach(args => logException.apply(this, args));
+                    exceptionsDuringInit.forEach(args =>
+                        logException.apply(this, args)
+                    );
                     exceptionsDuringInit = [];
                 })
                 .catch(e => console.error(e));
@@ -142,7 +154,7 @@ const Kumulos = {
      *
      * Use this method to forward exceptions from other error handlers.
      */
-    logUncaughtException: (e) => {
+    logUncaughtException: e => {
         logException(e, true);
     },
 
@@ -220,7 +232,7 @@ const Kumulos = {
      * Accurate locaiton information is used for geofencing
      * @param {object} location - the coordinates of the device
      */
-    sendLocationUpdate: (location: { lat: number, lng: number }) => {
+    sendLocationUpdate: (location: { lat: number; lng: number }) => {
         cordova.exec(noop, noop, NativeModuleName, 'sendLocationUpdate', [
             location.lat,
             location.lng
@@ -231,30 +243,52 @@ const Kumulos = {
      * @param {string} userIdentifier - the unique user ID
      * @param {object} attributes - optional attributes to set for the user (will overwrite any existing attributes)
      */
-    associateUserWithInstall: (userIdentifier: string, attributes: {} = null) => {
-        cordova.exec(noop, noop, NativeModuleName, 'associateUserWithInstall', [userIdentifier, attributes]);
+    associateUserWithInstall: (
+        userIdentifier: string,
+        attributes: {} = null
+    ) => {
+        cordova.exec(noop, noop, NativeModuleName, 'associateUserWithInstall', [
+            userIdentifier,
+            attributes
+        ]);
     },
     /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.
      * @param {object} beacon - eddystone beacon information
      */
-    trackEddystoneBeaconProximity: (beacon: { namespaceHex: string, instanceHex: string, distanceMetres?: number }) => {
-        Kumulos.trackEventImmediately(KumulosEvent.EngageBeaconEnteredProximity, {
-            type: BeaconType.Eddystone,
-            ...beacon
-        });
+    trackEddystoneBeaconProximity: (beacon: {
+        namespaceHex: string;
+        instanceHex: string;
+        distanceMetres?: number;
+    }) => {
+        Kumulos.trackEventImmediately(
+            KumulosEvent.EngageBeaconEnteredProximity,
+            {
+                type: BeaconType.Eddystone,
+                namespace: beacon.namespaceHex,
+                instance: beacon.instanceHex,
+                distanceMetres: beacon.distanceMetres
+            }
+        );
     },
     /**
      * Records a proximity event for an iBeacon beacon. Proximity events can be used in automation rules.
      * @param {object} beacon - iBeacon beacon information
      */
-    trackiBeaconProximity: (beacon: { uuid: string, major: number, minor: number, proximity?: number }) => {
-        Kumulos.trackEventImmediately(KumulosEvent.EngageBeaconEnteredProximity, {
-            type: BeaconType.iBeacon,
-            ...beacon
-        });
-    },
-
+    trackiBeaconProximity: (beacon: {
+        uuid: string;
+        major: number;
+        minor: number;
+        proximity?: number;
+    }) => {
+        Kumulos.trackEventImmediately(
+            KumulosEvent.EngageBeaconEnteredProximity,
+            {
+                type: BeaconType.iBeacon,
+                ...beacon
+            }
+        );
+    }
 };
 
 export default Kumulos;
