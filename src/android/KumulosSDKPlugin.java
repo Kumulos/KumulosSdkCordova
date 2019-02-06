@@ -51,19 +51,14 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     }
 
     private void pushStoreToken(JSONArray args, CallbackContext callbackContext) {
-        JSONObject props = new JSONObject();
+        String token = args.getString(0);
 
-        try {
-            props.put("type", 2);
-            props.put("token", args.getString(0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callbackContext.error(e.getMessage());
+        if (null == token) {
+            callbackContext.error('Token must not be null');
             return;
         }
 
-        Kumulos.trackEventImmediately(this.cordova.getContext(), EVENT_TYPE_PUSH_DEVICE_REGISTERED, props);
-
+        Kumulos.pushTokenStore(this.cordova.getContext(), token);
         callbackContext.success();
     }
 
