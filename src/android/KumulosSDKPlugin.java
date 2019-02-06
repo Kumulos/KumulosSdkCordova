@@ -20,6 +20,8 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_TRACK_EVENT = "trackEvent";
     private static final String ACTION_SEND_LOCATION_UPDATE = "sendLocationUpdate";
     private static final String ACTION_ASSOCIATE_USER = "associateUserWithInstall";
+    private static final String ACTION_CLEAR_USER_ASSOCIATION = "clearUserAssociation";
+    private static final String ACTION_GET_CURRENT_USER_ID = "getCurrentUserId";
     private static final String ACTION_PUSH_STORE_TOKEN = "pushStoreToken";
 
     private static final String EVENT_TYPE_PUSH_DEVICE_REGISTERED = "k.push.deviceRegistered";
@@ -42,6 +44,12 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             case ACTION_ASSOCIATE_USER:
                 this.associateUser(args, callbackContext);
                 return true;
+            case ACTION_CLEAR_USER_ASSOCIATION:
+                this.clearUserAssociation(args, callbackContext);
+                return true;
+            case ACTION_GET_CURRENT_USER_ID:
+                this.getCurrentUserId(args, callbackContext);
+                return true;
             case ACTION_PUSH_STORE_TOKEN:
                 this.pushStoreToken(args, callbackContext);
                 return true;
@@ -51,10 +59,17 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     }
 
     private void pushStoreToken(JSONArray args, CallbackContext callbackContext) {
-        String token = args.getString(0);
+        String token = null;
+        try {
+            token = args.getString(0);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
+        }
 
         if (null == token) {
-            callbackContext.error('Token must not be null');
+            callbackContext.error("Token must not be null");
             return;
         }
 
@@ -83,6 +98,16 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         }
 
         callbackContext.success();
+    }
+
+    private void clearUserAssociation(JSONArray args, CallbackContext callbackContext) {
+        Kumulos.clearUserAssociation(this.cordova.getContext());
+        callbackContext.success();
+    }
+
+    private void getCurrentUserId(JSONArray args, CallbackContext callbackContext) {
+        String userId = Kumulos.getCurrentUserIdentifier(this.cordova.getContext());
+        callbackContext.success(userId);
     }
 
     private void sendLocationUpdate(JSONArray args, CallbackContext callbackContext) {
