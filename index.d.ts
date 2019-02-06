@@ -1,4 +1,3 @@
-
 interface PushChannel {
     uuid: string;
     name?: string;
@@ -127,10 +126,7 @@ interface KumulosSdk {
      * Updates the location of the current installation in Kumulos
      * Accurate location information is used for geofencing
      */
-    sendLocationUpdate: (location: {
-        lat: number;
-        lng: number;
-    }) => void;
+    sendLocationUpdate: (location: { lat: number; lng: number }) => void;
 
     /**
      * Associates a user identifier with the current Kumulos installation record.
@@ -138,6 +134,17 @@ interface KumulosSdk {
      * If attributes are provided, will also set attributes for this user
      */
     associateUserWithInstall: (userIdentifier: string, attributes?: {}) => void;
+
+    /**
+     * Clears any current user association with this install record
+     */
+    clearUserAssociation: () => void;
+
+    /**
+     * Gets the currently associated user identifier
+     * @returns {Promise<string>} - the currently user identifier, or the install ID if none associated
+     */
+    getCurrentUserIdentifier: () => Promise<string>;
 
     /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.

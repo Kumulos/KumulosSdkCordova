@@ -23,7 +23,7 @@ export declare class PushChannelManager {
     private client;
     private headers;
     constructor(client: Client.Client, credentials: Client.Credentials);
-    private makeSubscriptionRequest(method, uuids);
+    private makeSubscriptionRequest;
     /**
      * Subscribes to the channels given by unique ID
      */
