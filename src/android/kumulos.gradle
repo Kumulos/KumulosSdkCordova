@@ -1,11 +1,5 @@
 
 android {
-    defaultConfig {
-        // Set up a default sender ID
-        manifestPlaceholders = [
-            kumulos_gcm_sender_id: ''
-        ]
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -21,6 +15,6 @@ android {
 }
 
 dependencies {
-    debugImplementation 'com.kumulos.android:kumulos-android-debug:4.0.4'
-    releaseImplementation 'com.kumulos.android:kumulos-android-release:4.0.4'
+    debugImplementation 'com.kumulos.android:kumulos-android-debug:6.0.0'
+    releaseImplementation 'com.kumulos.android:kumulos-android-release:6.0.0'
 }

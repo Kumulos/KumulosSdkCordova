@@ -13,6 +13,8 @@
 -(void)trackEvent:(CDVInvokedUrlCommand*)command;
 -(void)sendLocationUpdate:(CDVInvokedUrlCommand*)command;
 -(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command;
+-(void)clearUserAssociation:(CDVInvokedUrlCommand*)command;
+-(void)getCurrentUserId:(CDVInvokedUrlCommand*)command;
 -(void)pushStoreToken:(CDVInvokedUrlCommand*)command;
 
 @end
@@ -97,6 +99,21 @@
     [self.commandDelegate
      sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
      callbackId:command.callbackId];
+}
+
+-(void)clearUserAssociation:(CDVInvokedUrlCommand*)command {
+    [Kumulos.shared clearUserAssociation];
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)getCurrentUserId:(CDVInvokedUrlCommand*)command {
+    CDVPluginResult* result = [CDVPluginResult
+                               resultWithStatus:CDVCommandStatus_OK
+                               messageAsString: Kumulos.currentUserIdentifier];
+
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 -(void)pushStoreToken:(CDVInvokedUrlCommand *)command {

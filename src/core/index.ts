@@ -253,6 +253,27 @@ const Kumulos = {
         ]);
     },
     /**
+     * Clears any current user association with this install record
+     */
+    clearUserAssociation: () => {
+        cordova.exec(noop, noop, NativeModuleName, 'clearUserAssociation', []);
+    },
+    /**
+     * Gets the currently associated user identifier
+     * @returns {Promise<string>} - the currently user identifier, or the install ID if none associated
+     */
+    getCurrentUserIdentifier: (): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'getCurrentUserId',
+                []
+            );
+        });
+    },
+    /**
      * Records a proximity event for an Eddystone beacon. Proximity events can be used in automation rules.
      * @param {object} beacon - eddystone beacon information
      */

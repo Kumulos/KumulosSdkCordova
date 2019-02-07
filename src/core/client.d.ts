@@ -7,17 +7,17 @@ export declare class Client {
     constructor(apiKey: string, secretKey: string);
     getInstallId(): Promise<string>;
     call(methodName: string, params?: {}): Promise<any>;
-    private doCall(installId, methodName, params?);
+    private doCall;
     pushRemoveToken(): Promise<Response>;
-    private checkStatus(response);
-    private parseJson(response);
-    private handleResponse(data);
+    private checkStatus;
+    private parseJson;
+    private handleResponse;
 }
 export declare class Credentials {
     private apiKey;
     private secretKey;
     authString: string;
-    private getAuthorizationString();
+    private getAuthorizationString;
     constructor(apiKey: string, secretKey: string);
     getApiKey(): string;
 }
