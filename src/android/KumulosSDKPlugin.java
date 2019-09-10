@@ -22,6 +22,8 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_ASSOCIATE_USER = "associateUserWithInstall";
     private static final String ACTION_CLEAR_USER_ASSOCIATION = "clearUserAssociation";
     private static final String ACTION_GET_CURRENT_USER_ID = "getCurrentUserId";
+    private static final String ACTION_PUSH_REGISTER = "pushRegister";
+    private static final String ACTION_PUSH_UNREGISTER = "pushUnregister";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -46,6 +48,12 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 return true;
             case ACTION_GET_CURRENT_USER_ID:
                 this.getCurrentUserId(args, callbackContext);
+                return true;
+            case ACTION_PUSH_REGISTER:
+                this.pushRegUnreg(callbackContext, true);
+                return true;
+            case ACTION_PUSH_UNREGISTER:
+                this.pushRegUnreg(callbackContext, false);
                 return true;
             default:
                 return false;
@@ -166,6 +174,16 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private void getInstallId(CallbackContext callbackContext) {
         String id = Installation.id(this.cordova.getContext());
         callbackContext.success(id);
+    }
+
+    private void pushRegUnreg(CallbackContext callbackContext, boolean register) {
+        if (register) {
+            Kumulos.pushRegister(this.cordova.getContext());
+        } else {
+            Kumulos.pushUnregister(this.cordova.getContext());
+        }
+
+        callbackContext.success();
     }
 
 }

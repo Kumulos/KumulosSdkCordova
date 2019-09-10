@@ -15,6 +15,8 @@
 -(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command;
 -(void)clearUserAssociation:(CDVInvokedUrlCommand*)command;
 -(void)getCurrentUserId:(CDVInvokedUrlCommand*)command;
+-(void)pushRegister:(CDVInvokedUrlCommand*)command;
+-(void)pushUnregister:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -113,6 +115,22 @@
                                messageAsString: Kumulos.currentUserIdentifier];
 
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+-(void)pushRegister:(CDVInvokedUrlCommand*)command {
+    [Kumulos.shared pushRequestDeviceToken];
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)pushUnregister:(CDVInvokedUrlCommand*)command {
+    [Kumulos.shared pushUnregister];
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
 }
 
 @end

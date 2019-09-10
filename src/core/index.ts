@@ -175,11 +175,16 @@ const Kumulos = {
         return clientInstance.pushChannels;
     },
     /**
-     * Unsubscribe from push by removing the token associated with this installation
-     * @returns {Promise<Response>}
+     * Request a push token from the user and register for push notifications
      */
-    pushRemoveToken: (): Promise<Response> => {
-        return clientInstance.pushRemoveToken();
+    pushRegister: (): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'pushRegister', []);
+    },
+    /**
+     * Unsubscribe from push by removing the token associated with this installation
+     */
+    pushUnregister: (): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'pushUnregister', []);
     },
     /**
      * Tracks a custom analytics event with Kumulos.
