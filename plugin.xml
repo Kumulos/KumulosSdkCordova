@@ -13,7 +13,7 @@
 			</feature>
 		</config-file>
 		<source-file src="src/ios/KumulosSDKPlugin.m" />
-		<framework src="KumulosSdkObjectiveC" type="podspec" spec="1.7.0" />
+		<framework src="KumulosSdkObjectiveC" type="podspec" spec="2.2.0" />
 	</platform>
 	<platform name="android">
 		<config-file parent="/*" target="res/xml/config.xml">

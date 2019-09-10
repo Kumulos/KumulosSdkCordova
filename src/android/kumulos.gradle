@@ -15,6 +15,6 @@ android {
 }
 
 dependencies {
-    debugImplementation 'com.kumulos.android:kumulos-android-debug:6.0.0'
-    releaseImplementation 'com.kumulos.android:kumulos-android-release:6.0.0'
+    debugImplementation 'com.kumulos.android:kumulos-android-debug:8.1.0'
+    releaseImplementation 'com.kumulos.android:kumulos-android-release:8.1.0'
 }
