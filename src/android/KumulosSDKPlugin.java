@@ -22,9 +22,6 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_ASSOCIATE_USER = "associateUserWithInstall";
     private static final String ACTION_CLEAR_USER_ASSOCIATION = "clearUserAssociation";
     private static final String ACTION_GET_CURRENT_USER_ID = "getCurrentUserId";
-    private static final String ACTION_PUSH_STORE_TOKEN = "pushStoreToken";
-
-    private static final String EVENT_TYPE_PUSH_DEVICE_REGISTERED = "k.push.deviceRegistered";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -50,31 +47,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             case ACTION_GET_CURRENT_USER_ID:
                 this.getCurrentUserId(args, callbackContext);
                 return true;
-            case ACTION_PUSH_STORE_TOKEN:
-                this.pushStoreToken(args, callbackContext);
-                return true;
             default:
                 return false;
         }
-    }
-
-    private void pushStoreToken(JSONArray args, CallbackContext callbackContext) {
-        String token = null;
-        try {
-            token = args.getString(0);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callbackContext.error(e.getMessage());
-            return;
-        }
-
-        if (null == token) {
-            callbackContext.error("Token must not be null");
-            return;
-        }
-
-        Kumulos.pushTokenStore(this.cordova.getContext(), token);
-        callbackContext.success();
     }
 
     private void associateUser(JSONArray args, CallbackContext callbackContext) {

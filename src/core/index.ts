@@ -182,22 +182,6 @@ const Kumulos = {
         return clientInstance.pushRemoveToken();
     },
     /**
-     * Associates the given push token with this installation in Kumulos
-     * @param {string} token - the push token from FCM or APNS
-     */
-    pushStoreToken: (token: string) => {
-        cordova.exec(noop, noop, NativeModuleName, 'pushStoreToken', [token]);
-    },
-    /**
-     * Tracks a conversion event for a given push notification ID
-     * @param {string} notificationId - the notification uuid
-     */
-    pushTrackOpen: (notificationId: string) => {
-        Kumulos.trackEvent(KumulosEvent.PushTrackOpen, {
-            id: notificationId
-        });
-    },
-    /**
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.

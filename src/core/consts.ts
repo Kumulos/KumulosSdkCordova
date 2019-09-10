@@ -9,7 +9,6 @@ export const NativeModuleName = 'KumulosSDKPlugin';
 
 export const KumulosEvent = {
     AppForegrounded: 'k.fg',
-    PushTrackOpen: 'k.push.opened',
     EngageBeaconEnteredProximity: 'k.engage.beaconEnteredProximity',
     EngageLocationUpdated: 'k.engage.locationUpdated',
     CrashLoggedException: 'k.crash.loggedException'

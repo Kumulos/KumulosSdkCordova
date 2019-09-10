@@ -15,7 +15,6 @@
 -(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command;
 -(void)clearUserAssociation:(CDVInvokedUrlCommand*)command;
 -(void)getCurrentUserId:(CDVInvokedUrlCommand*)command;
--(void)pushStoreToken:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -114,30 +113,6 @@
                                messageAsString: Kumulos.currentUserIdentifier];
 
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-}
-
--(void)pushStoreToken:(CDVInvokedUrlCommand *)command {
-    NSString* token = command.arguments[0];
-
-    // Data conversion from https://stackoverflow.com/a/7318062/543200
-    NSMutableData* tokenData = [[NSMutableData alloc] init];
-
-    unsigned char byte;
-    char byteChars[3] = {'\0','\0','\0'};
-    int i;
-
-    for (i = 0; i < token.length / 2; i++) {
-        byteChars[0] = [token characterAtIndex:i * 2];
-        byteChars[1] = [token characterAtIndex:(i * 2) + 1];
-        byte = strtol(byteChars, NULL, 16);
-        [tokenData appendBytes:&byte length:1];
-    }
-
-    [Kumulos.shared pushRegisterWithDeviceToken:tokenData];
-
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-     callbackId:command.callbackId];
 }
 
 @end
