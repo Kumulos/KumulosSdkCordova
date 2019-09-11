@@ -3,16 +3,24 @@ package com.kumulos.cordova.android;
 import android.app.Application;
 import android.location.Location;
 
+import com.kumulos.android.InAppInboxItem;
 import com.kumulos.android.Installation;
 import com.kumulos.android.Kumulos;
 import com.kumulos.android.KumulosConfig;
 import com.kumulos.android.KumulosInApp;
+import com.kumulos.android.KumulosInApp.InboxMessagePresentationResult;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class KumulosSDKPlugin extends CordovaPlugin {
 
@@ -26,6 +34,8 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_PUSH_REGISTER = "pushRegister";
     private static final String ACTION_PUSH_UNREGISTER = "pushUnregister";
     private static final String ACTION_IN_APP_UPDATE_CONSENT = "inAppUpdateUserConsent";
+    private static final String ACTION_IN_APP_GET_INBOX_ITEMS = "inAppGetInboxItems";
+    private static final String ACTION_IN_APP_PRESENT_INBOX_MESSAGE = "inAppPresentInboxMessage";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -59,6 +69,12 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 return true;
             case ACTION_IN_APP_UPDATE_CONSENT:
                 this.inAppUpdateConsent(args, callbackContext);
+                return true;
+            case ACTION_IN_APP_GET_INBOX_ITEMS:
+                this.inAppGetInboxItems(callbackContext);
+                return true;
+            case ACTION_IN_APP_PRESENT_INBOX_MESSAGE:
+                this.inAppPresentInboxMessage(args, callbackContext);
                 return true;
             default:
                 return false;
@@ -204,6 +220,76 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
         KumulosInApp.updateConsentForUser(consented);
         callbackContext.success();
+    }
+
+    private void inAppGetInboxItems(CallbackContext callbackContext) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(cordova.getContext());
+        JSONArray results = new JSONArray();
+        try {
+            for (InAppInboxItem item : items) {
+                JSONObject mapped = new JSONObject();
+
+                mapped.put("id", item.getId());
+                mapped.put("title", item.getTitle());
+                mapped.put("subtitle", item.getSubtitle());
+
+                Date availableFrom = item.getAvailableFrom();
+                Date availableTo = item.getAvailableTo();
+                Date dismissedAt = item.getDismissedAt();
+
+                if (null == availableFrom) {
+                    mapped.put("availableFrom", "");
+                } else {
+                    mapped.put("availableFrom", formatter.format(availableFrom));
+                }
+
+                if (null == availableTo) {
+                    mapped.put("availableTo", "");
+                } else {
+                    mapped.put("availableTo", formatter.format(availableTo));
+                }
+
+                if (null == dismissedAt) {
+                    mapped.put("dismissedAt", "");
+                } else {
+                    mapped.put("dismissedAt", formatter.format(dismissedAt));
+                }
+
+                results.put(mapped);
+            }
+        } catch(JSONException e){
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+        }
+
+        callbackContext.success(results);
+    }
+
+    private void inAppPresentInboxMessage(JSONArray args, CallbackContext callbackContext) {
+        int messageId = args.optInt(0, -1);
+
+        if (messageId == -1) {
+            callbackContext.error("Message not found or not available");
+            return;
+        }
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
+        for (InAppInboxItem item : items) {
+            if (item.getId() == messageId) {
+                InboxMessagePresentationResult result = KumulosInApp.presentInboxMessage(cordova.getContext(), item);
+
+                if (result == InboxMessagePresentationResult.PRESENTED) {
+                    callbackContext.success();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        callbackContext.error("Message not found or not available");
     }
 
 }

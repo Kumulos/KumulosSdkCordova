@@ -20,6 +20,15 @@ export interface KumulosConfig {
     sourceMapTag?: string;
 }
 
+interface InAppInboxItem {
+    id: number;
+    title: string;
+    subtitle: string;
+    availableFrom: string | '';
+    availableTo: string | '';
+    availableDismissedAt: string | '';
+}
+
 let currentConfig: KumulosConfig = null;
 let clientInstance: Client = null;
 let initialized: boolean = false;
@@ -197,6 +206,34 @@ const Kumulos = {
         cordova.exec(noop, noop, NativeModuleName, 'inAppUpdateUserConsent', [
             Boolean(consented)
         ]);
+    },
+    /**
+     * Gets a list of available in-app messages sent to the user and stored in the inbox
+     */
+    inAppGetInboxItems: (): Promise<InAppInboxItem> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppGetInboxItems',
+                []
+            );
+        });
+    },
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppPresentInboxMessage: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppPresentInboxMessage',
+                [message.id]
+            );
+        });
     },
     /**
      * Tracks a custom analytics event with Kumulos.

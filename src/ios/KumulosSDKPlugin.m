@@ -18,6 +18,8 @@
 -(void)pushRegister:(CDVInvokedUrlCommand*)command;
 -(void)pushUnregister:(CDVInvokedUrlCommand*)command;
 -(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command;
+-(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command;
+-(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -141,6 +143,54 @@
 
     [self.commandDelegate
      sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command {
+    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+    NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
+
+    NSDateFormatter* formatter = [NSDateFormatter new];
+    [formatter setTimeStyle:NSDateFormatterFullStyle];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+    [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+
+    for (KSInAppInboxItem* item in inboxItems) {
+        [items addObject:@{@"id": item.id,
+                           @"title": item.title,
+                           @"subtitle": item.subtitle,
+                           @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
+                           @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
+                           @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @""}];
+    }
+
+    CDVPluginResult* result = [CDVPluginResult
+                               resultWithStatus:CDVCommandStatus_OK
+                               messageAsArray:items];
+
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+-(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command {
+    NSNumber* messageId = command.arguments[0];
+
+    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+    for (KSInAppInboxItem* msg in inboxItems) {
+        if ([msg.id isEqualToNumber:messageId]) {
+            KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
+
+            if (result == KSInAppMessagePresentationPresented) {
+                [self.commandDelegate
+                    sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                    callbackId:command.callbackId];
+            } else {
+                break;
+            }
+        }
+    }
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString@"Message not found or not available"]
      callbackId:command.callbackId];
 }
 
