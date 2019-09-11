@@ -6,6 +6,7 @@
 	<js-module name="KumulosSDK" src="www/kumulos-sdk-plugin.js">
 		<clobbers target="window.Kumulos" />
 	</js-module>
+	<hook type="before_prepare" src="scripts/inject-config.js" />
 	<platform name="ios">
 		<config-file parent="/*" target="config.xml">
 			<feature name="KumulosSDKPlugin">
@@ -22,9 +23,30 @@
   				<param name="onload" value="true" />
 			</feature>
 		</config-file>
-		<config-file parent="/*" target="AndroidManifest.xml">
+		<config-file parent="/manifest/application" target="AndroidManifest.xml">
+			<!-- Kumulos FCM handler -->
+			<service android:name="com.kumulos.android.FirebaseMessagingService" android:exported="false">
+                <intent-filter>
+					<action android:name="com.google.firebase.MESSAGING_EVENT" />
+				</intent-filter>
+			</service>
+
+			<!-- Kumulos Push receiver -->
+			<receiver android:name="com.kumulos.cordova.android.PushReceiver" android:exported="false">
+				<intent-filter>
+					<action android:name="com.kumulos.push.RECEIVED" />
+					<action android:name="com.kumulos.push.OPENED" />
+				</intent-filter>
+			</receiver>
+
+			<!-- Kumulos Init Provider -->
+			<provider
+				android:authorities="${applicationId}.kumulosinitprovider"
+				android:name="com.kumulos.cordova.android.KumulosInitProvider" android:exported="false" />
 		</config-file>
+		<source-file src="src/android/KumulosInitProvider.java" target-dir="src/com/kumulos/cordova/android" />
 		<source-file src="src/android/KumulosSDKPlugin.java" target-dir="src/com/kumulos/cordova/android" />
+		<source-file src="src/android/PushReceiver.java" target-dir="src/com/kumulos/cordova/android" />
 		<framework src="src/android/kumulos.gradle" custom="true" type="gradleReference" />
 	</platform>
 </plugin>
