@@ -6,6 +6,7 @@ import android.location.Location;
 import com.kumulos.android.Installation;
 import com.kumulos.android.Kumulos;
 import com.kumulos.android.KumulosConfig;
+import com.kumulos.android.KumulosInApp;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -24,6 +25,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_GET_CURRENT_USER_ID = "getCurrentUserId";
     private static final String ACTION_PUSH_REGISTER = "pushRegister";
     private static final String ACTION_PUSH_UNREGISTER = "pushUnregister";
+    private static final String ACTION_IN_APP_UPDATE_CONSENT = "inAppUpdateUserConsent";
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -54,6 +56,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 return true;
             case ACTION_PUSH_UNREGISTER:
                 this.pushRegUnreg(callbackContext, false);
+                return true;
+            case ACTION_IN_APP_UPDATE_CONSENT:
+                this.inAppUpdateConsent(args, callbackContext);
                 return true;
             default:
                 return false;
@@ -183,6 +188,21 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             Kumulos.pushUnregister(this.cordova.getContext());
         }
 
+        callbackContext.success();
+    }
+
+    private void inAppUpdateConsent(JSONArray args, CallbackContext callbackContext) {
+        final boolean consented;
+
+        try {
+            consented = args.getBoolean(0);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+            return;
+        }
+
+        KumulosInApp.updateConsentForUser(consented);
         callbackContext.success();
     }
 

@@ -17,6 +17,7 @@
 -(void)getCurrentUserId:(CDVInvokedUrlCommand*)command;
 -(void)pushRegister:(CDVInvokedUrlCommand*)command;
 -(void)pushUnregister:(CDVInvokedUrlCommand*)command;
+-(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -127,6 +128,16 @@
 
 -(void)pushUnregister:(CDVInvokedUrlCommand*)command {
     [Kumulos.shared pushUnregister];
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command {
+    NSNumber* consented = command.arguments[0];
+
+    [KumulosInApp updateConsentForUser:[consented isEqual:@(YES)]];
 
     [self.commandDelegate
      sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]

@@ -187,6 +187,18 @@ const Kumulos = {
         cordova.exec(noop, noop, NativeModuleName, 'pushUnregister', []);
     },
     /**
+     * Opts the user in or out of in-app messaging
+     *
+     * Note the configured consent strategy in SDK initialization must
+     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
+     * exception.
+     */
+    inAppUpdateConsentForUser: (consented): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'inAppUpdateUserConsent', [
+            Boolean(consented)
+        ]);
+    },
+    /**
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.
