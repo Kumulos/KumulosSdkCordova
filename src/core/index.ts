@@ -2,11 +2,9 @@ import * as cordova from 'cordova';
 
 import {
     BeaconType,
-    CordovaRuntimeType,
     CrashReportFormat,
     KumulosEvent,
-    NativeModuleName,
-    SdkInfo
+    NativeModuleName
 } from './consts';
 import { empty, noop, nullOrUndefined } from './util';
 
@@ -82,21 +80,7 @@ const Kumulos = {
             args.push(config.enableCrashReporting);
         }
 
-        // SDK info
-        args.push(SdkInfo);
-
-        // Runtime info
-        args.push({
-            id: CordovaRuntimeType,
-            version: cordova.version
-        });
-
         cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
-
-        // Native app foreground watchers miss the initial foreground as we
-        // init from the JS webview after loading all the native chrome so
-        // we track foregrounds from here instead
-        Kumulos.trackEvent(KumulosEvent.AppForegrounded);
 
         clientInstance = new Client(config.apiKey, config.secretKey);
         currentConfig = config;
