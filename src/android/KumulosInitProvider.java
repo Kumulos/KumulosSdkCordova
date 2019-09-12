@@ -13,7 +13,15 @@ import android.text.TextUtils;
 import com.kumulos.android.Kumulos;
 import com.kumulos.android.KumulosConfig;
 
+import org.apache.cordova.CordovaWebView;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class KumulosInitProvider extends ContentProvider {
+
+    private static final String SDK_VERSION = "4.0.0";
+    private static final int RUNTIME_TYPE = 3;
+    private static final int SDK_TYPE = 6;
 
     private static final String KEY_API_KEY = "kumulos_api_key";
     private static final String KEY_SECRET_KEY = "kumulos_secret_key";
@@ -52,6 +60,21 @@ public class KumulosInitProvider extends ContentProvider {
         } else if (IN_APP_EXPLICIT_BY_USER.equals(inAppConsentStrategy)) {
             config.enableInAppMessaging(KumulosConfig.InAppConsentStrategy.EXPLICIT_BY_USER);
         }
+
+        JSONObject runtimeInfo = new JSONObject();
+        JSONObject sdkInfo = new JSONObject();
+
+        try {
+            runtimeInfo.put("id", RUNTIME_TYPE);
+            runtimeInfo.put("version", CordovaWebView.CORDOVA_VERSION);
+            sdkInfo.put("id", SDK_TYPE);
+            sdkInfo.put("version", SDK_VERSION);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        config.setRuntimeInfo(runtimeInfo);
+        config.setSdkInfo(sdkInfo);
 
         Kumulos.initialize(application, config.build());
 
