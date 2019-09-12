@@ -8,6 +8,7 @@
 	</js-module>
 	<hook type="before_prepare" src="scripts/inject-config.js" />
 	<platform name="ios">
+        <resource-file src="scripts/kumulos.plist" target="kumulos.plist" />
 		<config-file parent="/*" target="config.xml">
 			<feature name="KumulosSDKPlugin">
 				<param name="ios-package" value="KumulosSDKPlugin" />

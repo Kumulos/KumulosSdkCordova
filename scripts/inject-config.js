@@ -129,9 +129,7 @@ function prepareAndroid(context, kumulosConfig) {
     );
 
     if (fs.existsSync(gServicesJson)) {
-        console.info(
-            'Kumulos: found google-services.json, copying into appropriate place for FCM'
-        );
+        console.info('Kumulos: found google-services.json, configuring FCM');
         const gServicesDest = path.join(
             context.opts.projectRoot,
             'platforms',
@@ -142,12 +140,41 @@ function prepareAndroid(context, kumulosConfig) {
         fs.copyFileSync(gServicesJson, gServicesDest);
     } else {
         console.warn(
-            'Kumulos: no google-services.json was found, skipping FCM configuration'
+            'Kumulos: google-services.json was not found, skipping FCM configuration'
         );
     }
 }
 
-function prepareIos(context, kumulosConfig) {}
+function prepareIos(context, kumulosConfig) {
+    const iosPath = path.join(context.opts.projectRoot, 'platforms', 'ios');
+    const files = fs.readdirSync(iosPath);
+
+    const xcodeProj = files.find(name => name.indexOf('.xcodeproj') > -1);
+    const targetName = xcodeProj.replace('.xcodeproj', '');
+
+    const configDest = path.join(
+        iosPath,
+        targetName,
+        'Resources',
+        'kumulos.plist'
+    );
+
+    if (!fs.existsSync(configDest)) {
+        console.error(
+            'Kumulos: kumulos.plist resource not found, aborting setup'
+        );
+        return;
+    }
+
+    const config = renderTemplate('kumulos.plist', {
+        API_KEY: kumulosConfig.apiKey,
+        SECRET_KEY: kumulosConfig.secretKey,
+        ENABLE_CRASH: kumulosConfig.enableCrashReporting,
+        IN_APP_STRATEGY: kumulosConfig.inAppConsentStrategy
+    });
+
+    fs.writeFileSync(configDest, config, { encoding: 'utf-8' });
+}
 
 module.exports = function injectKumulosConfig(context) {
     const kumulosConfig = readKumulosSettings(context);

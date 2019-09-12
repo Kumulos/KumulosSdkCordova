@@ -1,12 +1,22 @@
 /********* KumulosSDKPlugin.m Cordova Plugin Implementation *******/
 
+#import <objc/runtime.h>
 #import <Cordova/CDV.h>
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
+static const NSString* KSCordovaSdkVersion = @"4.0.0";
+static IMP existingAppDidLaunchDelegate = NULL;
+
+BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions);
+
+#pragma mark - Plugin interface
+
 @interface KumulosSDKPlugin : CDVPlugin {
   // Member variables go here.
 }
+
++(void)load;
 
 -(void)initBaseSdk:(CDVInvokedUrlCommand*)command;
 -(void)getInstallId:(CDVInvokedUrlCommand*)command;
@@ -24,6 +34,19 @@
 @end
 
 @implementation KumulosSDKPlugin
+
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class class = CDVAppDelegate.class;
+
+        // Did launch delegate
+        SEL didLaunchSelector = @selector(application:didFinishLaunchingWithOptions:);
+        const char *launchTypes = method_getTypeEncoding(class_getInstanceMethod(class, didLaunchSelector));
+
+        existingAppDidLaunchDelegate = class_replaceMethod(class, didLaunchSelector, (IMP) kumulos_applicationDidFinishLaunchingWithOptions, launchTypes);
+    });
+}
 
 - (void)initBaseSdk:(CDVInvokedUrlCommand*)command {
     NSString* apiKey = command.arguments[0];
@@ -190,8 +213,70 @@
     }
 
     [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString@"Message not found or not available"]
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
      callbackId:command.callbackId];
 }
 
 @end
+
+#pragma mark - SDK Initialization Hook
+
+BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions) {
+
+    BOOL result = YES;
+
+    if (existingAppDidLaunchDelegate) {
+        result = ((BOOL(*)(id,SEL,UIApplication*, NSDictionary*))existingAppDidLaunchDelegate)(self, _cmd, application, launchOptions);
+    }
+
+    NSString* configPath = [NSBundle.mainBundle pathForResource:@"kumulos" ofType:@"plist"];
+    if (!configPath) {
+        NSLog(@"kumulos.plist NOT FOUND");
+        return result;
+    }
+
+    NSDictionary* configValues = [[NSDictionary alloc] initWithContentsOfFile:configPath];
+
+    // TODO
+    //    NSDictionary *userInfo = launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey];
+    //    if (userInfo != nil) {
+    //        KSStashPush(userInfo);
+    //    }
+
+    KSConfig* config = [KSConfig configWithAPIKey:configValues[@"apiKey"] andSecretKey:configValues[@"secretKey"]];
+
+    if (configValues[@"enableCrashReporting"]) {
+        [config enableCrashReporting];
+    }
+
+    if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"auto-enroll"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyAutoEnroll];
+    } else if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"explicit-by-user"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyExplicitByUser];
+    }
+
+    [config setRuntimeInfo:@{@"id": @(3), @"version": CDV_VERSION}];
+    [config setSdkInfo:@{@"id": @(6), @"version": KSCordovaSdkVersion}];
+
+#if DEBUG
+    [config setTargetType:TargetTypeDebug];
+#else
+    [config setTargetType:TargetTypeRelease];
+#endif
+
+    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification, KSPushReceivedInForegroundCompletionHandler completionHandler) {
+        // TODO
+        completionHandler(UNNotificationPresentationOptionAlert);
+    }];
+    [config setPushOpenedHandler:^(KSPushNotification * _Nonnull notification) {
+        // TODO
+    }];
+    [config setInAppDeepLinkHandler:^(NSDictionary * _Nonnull data) {
+        // TODO
+    }];
+
+    [Kumulos initializeWithConfig:config];
+
+    return result;
+}
+
