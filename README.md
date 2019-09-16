@@ -4,8 +4,8 @@ Kumulos provides tools to build and host backend storage for apps, send push not
 
 ## Prerequisites
 
-- iOS plugin installation requires [CocoaPods](https://cocoapods.org/) (`sudo gem install cocoapods`)
-- The plugin depends on Promises. Ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime [if required](https://caniuse.com/#search=Promise)
+-   iOS plugin installation requires [CocoaPods](https://cocoapods.org/) (`sudo gem install cocoapods`)
+-   The plugin depends on Promises. Ensure you have a [suitable promise polyfill](https://github.com/stefanpenner/es6-promise) available in your app runtime [if required](https://caniuse.com/#search=Promise)
 
 ## Get Started with Cordova
 
@@ -16,10 +16,24 @@ cordova plugin add cordova-plugin-kumulos-sdk
 Add https://*.kumulos.com to the `Content-Security-Policy` meta tag in your app, for example in `www/index.html`:
 
 ```html
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:; connect-src 'self' https://*.kumulos.com;">
+<meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:; connect-src 'self' https://*.kumulos.com;"
+/>
 ```
 
-After installation, you can now initialize the SDK with:
+Next You should create a `kumulos.json` file in your project root with Kumulos configuration:
+
+```json
+{
+    "apiKey": "YOUR_API_KEY",
+    "secretKey": "YOUR_SECRET_KEY",
+    "enableCrashReporting": false,
+    "inAppConsentStrategy": "in-app-disabled"
+}
+```
+
+After creating the config file, complete initialization with:
 
 ```javascript
 Kumulos.initialize({
@@ -48,7 +62,18 @@ Next, add the Kumulos type definitions to your `tsconfig.json` file:
 }
 ```
 
-Now you can now initialize the SDK with:
+Next You should create a `kumulos.json` file in your project root with Kumulos configuration:
+
+```json
+{
+    "apiKey": "YOUR_API_KEY",
+    "secretKey": "YOUR_SECRET_KEY",
+    "enableCrashReporting": false,
+    "inAppConsentStrategy": "in-app-disabled"
+}
+```
+
+After creating the config file, complete initialization with:
 
 ```typescript
 Kumulos.initialize({
