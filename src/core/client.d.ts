@@ -8,7 +8,6 @@ export declare class Client {
     getInstallId(): Promise<string>;
     call(methodName: string, params?: {}): Promise<any>;
     private doCall;
-    pushRemoveToken(): Promise<Response>;
     private checkStatus;
     private parseJson;
     private handleResponse;

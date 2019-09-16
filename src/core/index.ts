@@ -6,19 +6,37 @@ import {
     KumulosEvent,
     NativeModuleName
 } from './consts';
+import { PushChannelManager, PushNotification } from './push';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
-import { PushChannelManager } from './push';
 
 export interface KumulosConfig {
     apiKey: string;
     secretKey: string;
+    /**
+     * Turn crash reporting on for JS layer (defaults to false)
+     */
     enableCrashReporting?: boolean;
+    /**
+     * A version identifier for minified source maps you upload
+     * used in JS error reporting source mapping
+     */
     sourceMapTag?: string;
-    pushReceivedHandler: () => void;
-    pushOpenedHandler: () => void;
-    inAppDeepLinkPressedHandler: (data: { [key: string]: any }) => void;
+    /**
+     * Called when your app receives a push notification
+     */
+    pushReceivedHandler?: (notification: PushNotification) => void;
+    /**
+     * Called when a user taps a push notificaiton. Use to implement
+     * deep linking behavior.
+     */
+    pushOpenedHandler?: (notification: PushNotification) => void;
+    /**
+     * Called when a user taps a button with a deep link action from
+     * an in-app message. Allows you to implement deep linking behavior.
+     */
+    inAppDeepLinkPressedHandler?: (data: { [key: string]: any }) => void;
 }
 
 interface InAppInboxItem {
