@@ -34,7 +34,7 @@ interface InAppInboxItem {
     subtitle: string;
     availableFrom: string | '';
     availableTo: string | '';
-    availableDismissedAt: string | '';
+    dismissedAt: string | '';
 }
 declare const Kumulos: {
     /**
