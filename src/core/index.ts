@@ -16,6 +16,9 @@ export interface KumulosConfig {
     secretKey: string;
     enableCrashReporting?: boolean;
     sourceMapTag?: string;
+    pushReceivedHandler: () => void;
+    pushOpenedHandler: () => void;
+    inAppDeepLinkPressedHandler: (data: { [key: string]: any }) => void;
 }
 
 interface InAppInboxItem {
@@ -54,6 +57,20 @@ function logException(e, uncaught: boolean, context: {} = undefined) {
     });
 }
 
+function nativeMessageHandler(message?: { type: string; data: any } | string) {
+    if (!message || typeof message === 'string') {
+        return;
+    }
+
+    const handlerName = `${message.type}Handler`;
+
+    if (typeof currentConfig[handlerName] == 'function') {
+        currentConfig[handlerName](message.data);
+    } else {
+        console.log(`Kumulos: No handler defined for '${message.type}' event`);
+    }
+}
+
 const Kumulos = {
     /**
      * Used to configure the Kumulos class. Only needs to be called once per process
@@ -80,7 +97,13 @@ const Kumulos = {
             args.push(config.enableCrashReporting);
         }
 
-        cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
+        cordova.exec(
+            nativeMessageHandler,
+            noop,
+            NativeModuleName,
+            'initBaseSdk',
+            args
+        );
 
         clientInstance = new Client(config.apiKey, config.secretKey);
         currentConfig = config;

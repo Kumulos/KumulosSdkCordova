@@ -12,6 +12,7 @@ import android.text.TextUtils;
 
 import com.kumulos.android.Kumulos;
 import com.kumulos.android.KumulosConfig;
+import com.kumulos.android.KumulosInApp;
 
 import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
@@ -59,6 +60,10 @@ public class KumulosInitProvider extends ContentProvider {
             config.enableInAppMessaging(KumulosConfig.InAppConsentStrategy.AUTO_ENROLL);
         } else if (IN_APP_EXPLICIT_BY_USER.equals(inAppConsentStrategy)) {
             config.enableInAppMessaging(KumulosConfig.InAppConsentStrategy.EXPLICIT_BY_USER);
+        }
+
+        if (IN_APP_AUTO_ENROLL.equals(inAppConsentStrategy) || IN_APP_EXPLICIT_BY_USER.equals(inAppConsentStrategy)) {
+            KumulosInApp.setDeepLinkHandler(new KumulosSDKPlugin.InAppDeepLinkHandler());
         }
 
         JSONObject runtimeInfo = new JSONObject();
