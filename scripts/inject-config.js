@@ -47,7 +47,11 @@ function isValidConfig(config) {
         return false;
     }
 
-    const validInAppStrategies = ['auto-enroll', 'explicit-by-user'];
+    const validInAppStrategies = [
+        'auto-enroll',
+        'explicit-by-user',
+        'in-app-disabled'
+    ];
 
     if (
         !isEmpty(config.inAppConsentStrategy) &&
