@@ -1,12 +1,28 @@
 /********* KumulosSDKPlugin.m Cordova Plugin Implementation *******/
 
+#import <objc/runtime.h>
 #import <Cordova/CDV.h>
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
+static const NSString* KSCordovaSdkVersion = @"4.0.0";
+static IMP KSexistingAppDidLaunchDelegate = NULL;
+
+static CDVInvokedUrlCommand* KSjsCordovaCommand = nil;
+static KSPushNotification* KSpendingPush = nil;
+BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions);
+
+NSDictionary* KSPushDictFromModel(KSPushNotification* notification);
+
+#pragma mark - Plugin interface
+
 @interface KumulosSDKPlugin : CDVPlugin {
   // Member variables go here.
 }
+
++(void)load;
+
+-(BOOL) sendJsMessageWithType:(NSString*)type andData:(NSDictionary*) data;
 
 -(void)initBaseSdk:(CDVInvokedUrlCommand*)command;
 -(void)getInstallId:(CDVInvokedUrlCommand*)command;
@@ -15,33 +31,64 @@
 -(void)associateUserWithInstall:(CDVInvokedUrlCommand*)command;
 -(void)clearUserAssociation:(CDVInvokedUrlCommand*)command;
 -(void)getCurrentUserId:(CDVInvokedUrlCommand*)command;
--(void)pushStoreToken:(CDVInvokedUrlCommand*)command;
+-(void)pushRegister:(CDVInvokedUrlCommand*)command;
+-(void)pushUnregister:(CDVInvokedUrlCommand*)command;
+-(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command;
+-(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command;
+-(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command;
 
 @end
 
+static KumulosSDKPlugin* kumulosPluginInstance = nil;
+
 @implementation KumulosSDKPlugin
 
-- (void)initBaseSdk:(CDVInvokedUrlCommand*)command {
-    NSString* apiKey = command.arguments[0];
-    NSString* secretKey = command.arguments[1];
-    NSNumber* enableCrashReporting = command.arguments[2];
-    NSDictionary* sdkInfo = command.arguments[3];
-    NSDictionary* runtimeInfo = command.arguments[4];
++ (void)load {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class class = CDVAppDelegate.class;
 
-    KSConfig* config = [KSConfig configWithAPIKey:apiKey andSecretKey:secretKey];
+        // Did launch delegate
+        SEL didLaunchSelector = @selector(application:didFinishLaunchingWithOptions:);
+        const char *launchTypes = method_getTypeEncoding(class_getInstanceMethod(class, didLaunchSelector));
 
-    if ([enableCrashReporting isEqual: @(YES)]) {
-        [config enableCrashReporting];
+        KSexistingAppDidLaunchDelegate = class_replaceMethod(class, didLaunchSelector, (IMP) kumulos_applicationDidFinishLaunchingWithOptions, launchTypes);
+    });
+}
+
+- (void)pluginInitialize {
+    kumulosPluginInstance = self;
+}
+
+- (BOOL) sendJsMessageWithType:(NSString*)type andData:(NSDictionary*) data {
+    if (!KSjsCordovaCommand) {
+        return NO;
     }
 
-    [config setSdkInfo:sdkInfo];
-    [config setRuntimeInfo:runtimeInfo];
+    NSDictionary* message = @{@"type": type,
+                              @"data": data
+                              };
 
-    [Kumulos initializeWithConfig:config];
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
+    [result setKeepCallback:@(1)];
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-     callbackId:command.callbackId];
+    [self.commandDelegate sendPluginResult:result callbackId:KSjsCordovaCommand.callbackId];
+
+    return YES;
+}
+
+- (void)initBaseSdk:(CDVInvokedUrlCommand*)command {
+    KSjsCordovaCommand = command;
+
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [result setKeepCallback:@(1)];
+
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+
+    if (KSpendingPush) {
+        [self sendJsMessageWithType:@"pushOpened" andData:KSPushDictFromModel(KSpendingPush)];
+        KSpendingPush = nil;
+    }
 }
 
 - (void)getInstallId:(CDVInvokedUrlCommand*)command {
@@ -116,28 +163,165 @@
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
--(void)pushStoreToken:(CDVInvokedUrlCommand *)command {
-    NSString* token = command.arguments[0];
-
-    // Data conversion from https://stackoverflow.com/a/7318062/543200
-    NSMutableData* tokenData = [[NSMutableData alloc] init];
-
-    unsigned char byte;
-    char byteChars[3] = {'\0','\0','\0'};
-    int i;
-
-    for (i = 0; i < token.length / 2; i++) {
-        byteChars[0] = [token characterAtIndex:i * 2];
-        byteChars[1] = [token characterAtIndex:(i * 2) + 1];
-        byte = strtol(byteChars, NULL, 16);
-        [tokenData appendBytes:&byte length:1];
-    }
-
-    [Kumulos.shared pushRegisterWithDeviceToken:tokenData];
+-(void)pushRegister:(CDVInvokedUrlCommand*)command {
+    [Kumulos.shared pushRequestDeviceToken];
 
     [self.commandDelegate
      sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
      callbackId:command.callbackId];
 }
 
+-(void)pushUnregister:(CDVInvokedUrlCommand*)command {
+    [Kumulos.shared pushUnregister];
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command {
+    NSNumber* consented = command.arguments[0];
+
+    [KumulosInApp updateConsentForUser:[consented isEqual:@(YES)]];
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+     callbackId:command.callbackId];
+}
+
+-(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command {
+    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+    NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
+
+    NSDateFormatter* formatter = [NSDateFormatter new];
+    [formatter setTimeStyle:NSDateFormatterFullStyle];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+    [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+
+    for (KSInAppInboxItem* item in inboxItems) {
+        [items addObject:@{@"id": item.id,
+                           @"title": item.title,
+                           @"subtitle": item.subtitle,
+                           @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
+                           @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
+                           @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @""}];
+    }
+
+    CDVPluginResult* result = [CDVPluginResult
+                               resultWithStatus:CDVCommandStatus_OK
+                               messageAsArray:items];
+
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+-(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command {
+    NSNumber* messageId = command.arguments[0];
+
+    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+    for (KSInAppInboxItem* msg in inboxItems) {
+        if ([msg.id isEqualToNumber:messageId]) {
+            KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
+
+            if (result == KSInAppMessagePresentationPresented) {
+                [self.commandDelegate
+                    sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                    callbackId:command.callbackId];
+            } else {
+                break;
+            }
+        }
+    }
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+     callbackId:command.callbackId];
+}
+
 @end
+
+#pragma mark - Helpers
+
+NSDictionary* KSPushDictFromModel(KSPushNotification* notification) {
+    NSDictionary* aps = notification.aps;
+    NSDictionary *alert = aps[@"alert"] ?: @{};
+    NSString *title = alert[@"title"] ?: [NSNull null];
+    NSString *message = alert[@"body"] ?: [NSNull null];
+    NSString *url = notification.url ? [notification.url absoluteString] : nil;
+
+    NSDictionary* push = @{@"id": notification.id,
+                           @"title": title,
+                           @"message": message,
+                           @"data": notification.data ?: NSNull.null,
+                           @"url": url ?: NSNull.null
+                           };
+
+
+    return push;
+}
+
+#pragma mark - SDK Initialization Hook
+
+BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions) {
+
+    BOOL result = YES;
+
+    if (KSexistingAppDidLaunchDelegate) {
+        result = ((BOOL(*)(id,SEL,UIApplication*, NSDictionary*))KSexistingAppDidLaunchDelegate)(self, _cmd, application, launchOptions);
+    }
+
+    NSString* configPath = [NSBundle.mainBundle pathForResource:@"kumulos" ofType:@"plist"];
+    if (!configPath) {
+        NSLog(@"kumulos.plist NOT FOUND");
+        return result;
+    }
+
+    NSDictionary* configValues = [[NSDictionary alloc] initWithContentsOfFile:configPath];
+
+    NSDictionary *userInfo = launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey];
+    if (userInfo != nil) {
+        KSpendingPush = [KSPushNotification fromUserInfo:userInfo];
+    }
+
+    KSConfig* config = [KSConfig configWithAPIKey:configValues[@"apiKey"] andSecretKey:configValues[@"secretKey"]];
+
+    if (configValues[@"enableCrashReporting"]) {
+        [config enableCrashReporting];
+    }
+
+    if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"auto-enroll"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyAutoEnroll];
+    } else if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"explicit-by-user"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyExplicitByUser];
+    }
+
+    [config setRuntimeInfo:@{@"id": @(3), @"version": CDV_VERSION}];
+    [config setSdkInfo:@{@"id": @(6), @"version": KSCordovaSdkVersion}];
+
+#if DEBUG
+    [config setTargetType:TargetTypeDebug];
+#else
+    [config setTargetType:TargetTypeRelease];
+#endif
+
+    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification, KSPushReceivedInForegroundCompletionHandler completionHandler) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"pushReceived" andData:KSPushDictFromModel(notification)];
+        }
+        completionHandler(UNNotificationPresentationOptionAlert);
+    }];
+    [config setPushOpenedHandler:^(KSPushNotification * _Nonnull notification) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"pushOpened" andData:KSPushDictFromModel(notification)];
+        }
+    }];
+    [config setInAppDeepLinkHandler:^(NSDictionary * _Nonnull data) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"inAppDeepLinkPressed" andData:data];
+        }
+    }];
+
+    [Kumulos initializeWithConfig:config];
+
+    return result;
+}
+

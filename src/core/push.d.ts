@@ -1,5 +1,14 @@
 import 'whatwg-fetch';
 import * as Client from './client';
+export interface PushNotification {
+    id: number;
+    title?: string | null;
+    message?: string | null;
+    data?: {
+        [key: string]: any;
+    } | null;
+    url?: string | null;
+}
 export interface PushChannel {
     uuid: string;
     name?: string;
@@ -12,12 +21,6 @@ export interface ChannelSpec {
     meta?: any;
     name?: string;
     showInPortal?: boolean;
-}
-export declare class Push {
-    private client;
-    private headers;
-    constructor(client: Client.Client, credentials: Client.Credentials);
-    pushRemoveToken(): Promise<Response>;
 }
 export declare class PushChannelManager {
     private client;

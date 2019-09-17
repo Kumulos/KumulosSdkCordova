@@ -2,22 +2,50 @@ import * as cordova from 'cordova';
 
 import {
     BeaconType,
-    CordovaRuntimeType,
     CrashReportFormat,
     KumulosEvent,
-    NativeModuleName,
-    SdkInfo
+    NativeModuleName
 } from './consts';
+import { PushChannelManager, PushNotification } from './push';
 import { empty, noop, nullOrUndefined } from './util';
 
 import { Client } from './client';
-import { PushChannelManager } from './push';
 
 export interface KumulosConfig {
     apiKey: string;
     secretKey: string;
+    /**
+     * Turn crash reporting on for JS layer (defaults to false)
+     */
     enableCrashReporting?: boolean;
+    /**
+     * A version identifier for minified source maps you upload
+     * used in JS error reporting source mapping
+     */
     sourceMapTag?: string;
+    /**
+     * Called when your app receives a push notification
+     */
+    pushReceivedHandler?: (notification: PushNotification) => void;
+    /**
+     * Called when a user taps a push notificaiton. Use to implement
+     * deep linking behavior.
+     */
+    pushOpenedHandler?: (notification: PushNotification) => void;
+    /**
+     * Called when a user taps a button with a deep link action from
+     * an in-app message. Allows you to implement deep linking behavior.
+     */
+    inAppDeepLinkPressedHandler?: (data: { [key: string]: any }) => void;
+}
+
+interface InAppInboxItem {
+    id: number;
+    title: string;
+    subtitle: string;
+    availableFrom: string | '';
+    availableTo: string | '';
+    dismissedAt: string | '';
 }
 
 let currentConfig: KumulosConfig = null;
@@ -47,6 +75,20 @@ function logException(e, uncaught: boolean, context: {} = undefined) {
     });
 }
 
+function nativeMessageHandler(message?: { type: string; data: any } | string) {
+    if (!message || typeof message === 'string') {
+        return;
+    }
+
+    const handlerName = `${message.type}Handler`;
+
+    if (typeof currentConfig[handlerName] == 'function') {
+        currentConfig[handlerName](message.data);
+    } else {
+        console.log(`Kumulos: No handler defined for '${message.type}' event`);
+    }
+}
+
 const Kumulos = {
     /**
      * Used to configure the Kumulos class. Only needs to be called once per process
@@ -73,21 +115,13 @@ const Kumulos = {
             args.push(config.enableCrashReporting);
         }
 
-        // SDK info
-        args.push(SdkInfo);
-
-        // Runtime info
-        args.push({
-            id: CordovaRuntimeType,
-            version: cordova.version
-        });
-
-        cordova.exec(noop, noop, NativeModuleName, 'initBaseSdk', args);
-
-        // Native app foreground watchers miss the initial foreground as we
-        // init from the JS webview after loading all the native chrome so
-        // we track foregrounds from here instead
-        Kumulos.trackEvent(KumulosEvent.AppForegrounded);
+        cordova.exec(
+            nativeMessageHandler,
+            noop,
+            NativeModuleName,
+            'initBaseSdk',
+            args
+        );
 
         clientInstance = new Client(config.apiKey, config.secretKey);
         currentConfig = config;
@@ -175,26 +209,55 @@ const Kumulos = {
         return clientInstance.pushChannels;
     },
     /**
+     * Request a push token from the user and register for push notifications
+     */
+    pushRegister: (): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'pushRegister', []);
+    },
+    /**
      * Unsubscribe from push by removing the token associated with this installation
-     * @returns {Promise<Response>}
      */
-    pushRemoveToken: (): Promise<Response> => {
-        return clientInstance.pushRemoveToken();
+    pushUnregister: (): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'pushUnregister', []);
     },
     /**
-     * Associates the given push token with this installation in Kumulos
-     * @param {string} token - the push token from FCM or APNS
+     * Opts the user in or out of in-app messaging
+     *
+     * Note the configured consent strategy in SDK initialization must
+     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
+     * exception.
      */
-    pushStoreToken: (token: string) => {
-        cordova.exec(noop, noop, NativeModuleName, 'pushStoreToken', [token]);
+    inAppUpdateConsentForUser: (consented): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'inAppUpdateUserConsent', [
+            Boolean(consented)
+        ]);
     },
     /**
-     * Tracks a conversion event for a given push notification ID
-     * @param {string} notificationId - the notification uuid
+     * Gets a list of available in-app messages sent to the user and stored in the inbox
      */
-    pushTrackOpen: (notificationId: string) => {
-        Kumulos.trackEvent(KumulosEvent.PushTrackOpen, {
-            id: notificationId
+    inAppGetInboxItems: (): Promise<InAppInboxItem> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppGetInboxItems',
+                []
+            );
+        });
+    },
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppPresentInboxMessage: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppPresentInboxMessage',
+                [message.id]
+            );
         });
     },
     /**

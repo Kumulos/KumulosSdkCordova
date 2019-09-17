@@ -1,19 +1,40 @@
 package com.kumulos.cordova.android;
 
-import android.app.Application;
+import android.content.Context;
 import android.location.Location;
+import android.support.annotation.Nullable;
 
+import com.kumulos.android.InAppDeepLinkHandlerInterface;
+import com.kumulos.android.InAppInboxItem;
 import com.kumulos.android.Installation;
 import com.kumulos.android.Kumulos;
-import com.kumulos.android.KumulosConfig;
+import com.kumulos.android.KumulosInApp;
+import com.kumulos.android.KumulosInApp.InboxMessagePresentationResult;
+import com.kumulos.android.PushMessage;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 public class KumulosSDKPlugin extends CordovaPlugin {
+
+    @Nullable
+    static CallbackContext jsCallbackContext;
+    @Nullable
+    static PushMessage pendingPush;
+
+    static CordovaInterface sCordova;
 
     private static final String ACTION_INIT = "initBaseSdk";
     private static final String ACTION_GET_INSTALL_ID = "getInstallId";
@@ -22,15 +43,24 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_ASSOCIATE_USER = "associateUserWithInstall";
     private static final String ACTION_CLEAR_USER_ASSOCIATION = "clearUserAssociation";
     private static final String ACTION_GET_CURRENT_USER_ID = "getCurrentUserId";
-    private static final String ACTION_PUSH_STORE_TOKEN = "pushStoreToken";
-
-    private static final String EVENT_TYPE_PUSH_DEVICE_REGISTERED = "k.push.deviceRegistered";
+    private static final String ACTION_PUSH_REGISTER = "pushRegister";
+    private static final String ACTION_PUSH_UNREGISTER = "pushUnregister";
+    private static final String ACTION_IN_APP_UPDATE_CONSENT = "inAppUpdateUserConsent";
+    private static final String ACTION_IN_APP_GET_INBOX_ITEMS = "inAppGetInboxItems";
+    private static final String ACTION_IN_APP_PRESENT_INBOX_MESSAGE = "inAppPresentInboxMessage";
 
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+
+        sCordova = cordova;
+    }
+
+    @Override
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         switch (action) {
             case ACTION_INIT:
-                this.initBaseSdk(args, callbackContext);
+                this.initBaseSdk(callbackContext);
                 return true;
             case ACTION_GET_INSTALL_ID:
                 this.getInstallId(callbackContext);
@@ -50,31 +80,45 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             case ACTION_GET_CURRENT_USER_ID:
                 this.getCurrentUserId(args, callbackContext);
                 return true;
-            case ACTION_PUSH_STORE_TOKEN:
-                this.pushStoreToken(args, callbackContext);
+            case ACTION_PUSH_REGISTER:
+                this.pushRegUnreg(callbackContext, true);
+                return true;
+            case ACTION_PUSH_UNREGISTER:
+                this.pushRegUnreg(callbackContext, false);
+                return true;
+            case ACTION_IN_APP_UPDATE_CONSENT:
+                this.inAppUpdateConsent(args, callbackContext);
+                return true;
+            case ACTION_IN_APP_GET_INBOX_ITEMS:
+                this.inAppGetInboxItems(callbackContext);
+                return true;
+            case ACTION_IN_APP_PRESENT_INBOX_MESSAGE:
+                this.inAppPresentInboxMessage(args, callbackContext);
                 return true;
             default:
                 return false;
         }
     }
 
-    private void pushStoreToken(JSONArray args, CallbackContext callbackContext) {
-        String token = null;
+    static boolean sendMessageToJs(String type, JSONObject data) {
+        if (null == jsCallbackContext) {
+            return false;
+        }
+
+        JSONObject message = new JSONObject();
         try {
-            token = args.getString(0);
-        } catch (JSONException e) {
+            message.put("type", type);
+            message.put("data", data);
+        }  catch (JSONException e) {
             e.printStackTrace();
-            callbackContext.error(e.getMessage());
-            return;
+            return false;
         }
 
-        if (null == token) {
-            callbackContext.error("Token must not be null");
-            return;
-        }
+        PluginResult result = new PluginResult(PluginResult.Status.OK, message);
+        result.setKeepCallback(true);
+        jsCallbackContext.sendPluginResult(result);
 
-        Kumulos.pushTokenStore(this.cordova.getContext(), token);
-        callbackContext.success();
+        return true;
     }
 
     private void associateUser(JSONArray args, CallbackContext callbackContext) {
@@ -152,45 +196,124 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
-    private void initBaseSdk(JSONArray args, CallbackContext callbackContext) {
-        final String apiKey;
-        final String secretKey;
-        final boolean enableCrashReporting;
-        final JSONObject sdkInfo;
-        final JSONObject runtimeInfo;
+    private void initBaseSdk(CallbackContext callbackContext) {
+        jsCallbackContext = callbackContext;
+        PluginResult result = new PluginResult(PluginResult.Status.OK);
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);
+
+        if (null != pendingPush) {
+            KumulosSDKPlugin.sendMessageToJs("pushOpened", PushReceiver.pushMessageToJsonObject(pendingPush));
+            pendingPush = null;
+        }
+    }
+
+    private void getInstallId(CallbackContext callbackContext) {
+        String id = Installation.id(this.cordova.getContext());
+        callbackContext.success(id);
+    }
+
+    private void pushRegUnreg(CallbackContext callbackContext, boolean register) {
+        if (register) {
+            Kumulos.pushRegister(this.cordova.getContext());
+        } else {
+            Kumulos.pushUnregister(this.cordova.getContext());
+        }
+
+        callbackContext.success();
+    }
+
+    private void inAppUpdateConsent(JSONArray args, CallbackContext callbackContext) {
+        final boolean consented;
 
         try {
-            apiKey = args.getString(0);
-            secretKey = args.getString(1);
-            enableCrashReporting = args.getBoolean(2);
-            sdkInfo = args.getJSONObject(3);
-            runtimeInfo = args.getJSONObject(4);
+            consented = args.getBoolean(0);
         } catch (JSONException e) {
             e.printStackTrace();
             callbackContext.error(e.getMessage());
             return;
         }
 
-        KumulosConfig.Builder configBuilder = new KumulosConfig.Builder(apiKey, secretKey);
-
-        if (enableCrashReporting) {
-            configBuilder.enableCrashReporting();
-        }
-
-        configBuilder.setSdkInfo(sdkInfo);
-        configBuilder.setRuntimeInfo(runtimeInfo);
-
-        Application application = this.cordova.getActivity().getApplication();
-        KumulosConfig config = configBuilder.build();
-
-        Kumulos.initialize(application, config);
-
+        KumulosInApp.updateConsentForUser(consented);
         callbackContext.success();
     }
 
-    private void getInstallId(CallbackContext callbackContext) {
-        String id = Installation.id(this.cordova.getContext());
-        callbackContext.success(id);
+    private void inAppGetInboxItems(CallbackContext callbackContext) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(cordova.getContext());
+        JSONArray results = new JSONArray();
+        try {
+            for (InAppInboxItem item : items) {
+                JSONObject mapped = new JSONObject();
+
+                mapped.put("id", item.getId());
+                mapped.put("title", item.getTitle());
+                mapped.put("subtitle", item.getSubtitle());
+
+                Date availableFrom = item.getAvailableFrom();
+                Date availableTo = item.getAvailableTo();
+                Date dismissedAt = item.getDismissedAt();
+
+                if (null == availableFrom) {
+                    mapped.put("availableFrom", "");
+                } else {
+                    mapped.put("availableFrom", formatter.format(availableFrom));
+                }
+
+                if (null == availableTo) {
+                    mapped.put("availableTo", "");
+                } else {
+                    mapped.put("availableTo", formatter.format(availableTo));
+                }
+
+                if (null == dismissedAt) {
+                    mapped.put("dismissedAt", "");
+                } else {
+                    mapped.put("dismissedAt", formatter.format(dismissedAt));
+                }
+
+                results.put(mapped);
+            }
+        } catch(JSONException e){
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+        }
+
+        callbackContext.success(results);
+    }
+
+    private void inAppPresentInboxMessage(JSONArray args, CallbackContext callbackContext) {
+        int messageId = args.optInt(0, -1);
+
+        if (messageId == -1) {
+            callbackContext.error("Message not found or not available");
+            return;
+        }
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
+        for (InAppInboxItem item : items) {
+            if (item.getId() == messageId) {
+                InboxMessagePresentationResult result = KumulosInApp.presentInboxMessage(cordova.getContext(), item);
+
+                if (result == InboxMessagePresentationResult.PRESENTED) {
+                    callbackContext.success();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        callbackContext.error("Message not found or not available");
+    }
+
+    static class InAppDeepLinkHandler implements InAppDeepLinkHandlerInterface {
+
+        @Override
+        public void handle(Context context, JSONObject data) {
+            sendMessageToJs("inAppDeepLinkPressed", data);
+        }
     }
 
 }

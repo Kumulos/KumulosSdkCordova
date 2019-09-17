@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="kumulos_api_key" tools:ignore="TypographyDashes">{{API_KEY}}</string>
+    <string name="kumulos_secret_key" tools:ignore="TypographyDashes">{{SECRET_KEY}}</string>
+    <bool name="kumulos_enable_crash_reporting">{{ENABLE_CRASH}}</bool>
+    <string name="kumulos_in_app_consent_strategy" tools:ignore="TypographyDashes">{{IN_APP_STRATEGY}}</string>
+</resources>
