@@ -20,7 +20,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:16.0.7'
 }
 
-// Applicaiton of google services plugin based on
+// Application of google services plugin based on
 // https://github.com/chemerisuk/cordova-support-google-services
 buildscript {
     repositories {
