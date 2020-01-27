@@ -11,10 +11,11 @@ import com.kumulos.android.PushMessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import com.kumulos.android.PushActionHandlerInterface;
 
 public class PushReceiver extends PushBroadcastReceiver {
 
-    static JSONObject pushMessageToJsonObject(PushMessage pushMessage) {
+    static JSONObject pushMessageToJsonObject(PushMessage pushMessage, String actionId) {
         JSONObject message = new JSONObject();
 
         try {
@@ -24,6 +25,10 @@ public class PushReceiver extends PushBroadcastReceiver {
 
             if (null != pushMessage.getUrl()) {
                 message.put("url", pushMessage.getUrl().toString());
+            }
+
+            if (actionId != null){
+                 message.put("actionId", actionId);
             }
 
             message.put("data", pushMessage.getData());
@@ -38,7 +43,7 @@ public class PushReceiver extends PushBroadcastReceiver {
     protected void onPushReceived(Context context, PushMessage pushMessage) {
         super.onPushReceived(context, pushMessage);
 
-        KumulosSDKPlugin.sendMessageToJs("pushReceived", pushMessageToJsonObject(pushMessage));
+        KumulosSDKPlugin.sendMessageToJs("pushReceived", pushMessageToJsonObject(pushMessage, null));
     }
 
     @Override
@@ -50,7 +55,12 @@ public class PushReceiver extends PushBroadcastReceiver {
             /* Noop */
         }
 
-        Intent launchIntent = getPushOpenActivityIntent(context, pushMessage);
+        PushReceiver.handlePushOpen(context, pushMessage, null);
+    }
+
+    private static void handlePushOpen(Context context, PushMessage pushMessage, String actionId){
+        PushReceiver pr = new PushReceiver();
+        Intent launchIntent = pr.getPushOpenActivityIntent(context, pushMessage);
 
         if (null == launchIntent) {
             return;
@@ -80,18 +90,26 @@ public class PushReceiver extends PushBroadcastReceiver {
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         addDeepLinkExtras(pushMessage, launchIntent);
 
-        Intent existingIntent = KumulosSDKPlugin.sCordova.getActivity().getIntent();
-        addDeepLinkExtras(pushMessage, existingIntent);
+        if (KumulosSDKPlugin.sCordova != null){
+            Intent existingIntent = KumulosSDKPlugin.sCordova.getActivity().getIntent();
+            addDeepLinkExtras(pushMessage, existingIntent);
+        }
 
         context.startActivity(launchIntent);
 
         if (null == KumulosSDKPlugin.jsCallbackContext) {
             KumulosSDKPlugin.pendingPush = pushMessage;
+            KumulosSDKPlugin.pendingActionId = actionId;
             return;
         }
 
-        KumulosSDKPlugin.sendMessageToJs("pushOpened", pushMessageToJsonObject(pushMessage));
+        KumulosSDKPlugin.sendMessageToJs("pushOpened", pushMessageToJsonObject(pushMessage, actionId));
     }
 
-
+    static class PushActionHandler implements PushActionHandlerInterface {
+        @Override
+        public void handle(Context context, PushMessage pushMessage, String actionId) {
+            PushReceiver.handlePushOpen(context, pushMessage, actionId);
+        }
+    }
 }

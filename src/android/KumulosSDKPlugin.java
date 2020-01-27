@@ -33,6 +33,8 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     static CallbackContext jsCallbackContext;
     @Nullable
     static PushMessage pendingPush;
+    @Nullable
+    static String pendingActionId;
 
     static CordovaInterface sCordova;
 
@@ -111,6 +113,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             message.put("data", data);
         }  catch (JSONException e) {
             e.printStackTrace();
+
             return false;
         }
 
@@ -203,8 +206,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.sendPluginResult(result);
 
         if (null != pendingPush) {
-            KumulosSDKPlugin.sendMessageToJs("pushOpened", PushReceiver.pushMessageToJsonObject(pendingPush));
+            KumulosSDKPlugin.sendMessageToJs("pushOpened", PushReceiver.pushMessageToJsonObject(pendingPush, pendingActionId));
             pendingPush = null;
+            pendingActionId = null;
         }
     }
 

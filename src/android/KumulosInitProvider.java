@@ -66,6 +66,8 @@ public class KumulosInitProvider extends ContentProvider {
             KumulosInApp.setDeepLinkHandler(new KumulosSDKPlugin.InAppDeepLinkHandler());
         }
 
+        Kumulos.setPushActionHandler(new PushReceiver.PushActionHandler());
+
         JSONObject runtimeInfo = new JSONObject();
         JSONObject sdkInfo = new JSONObject();
 
