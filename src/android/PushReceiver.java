@@ -110,6 +110,9 @@ public class PushReceiver extends PushBroadcastReceiver {
         @Override
         public void handle(Context context, PushMessage pushMessage, String actionId) {
             PushReceiver.handlePushOpen(context, pushMessage, actionId);
+
+            Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            context.sendBroadcast(it);
         }
     }
 }

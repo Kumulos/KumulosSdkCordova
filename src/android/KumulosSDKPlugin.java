@@ -113,7 +113,6 @@ public class KumulosSDKPlugin extends CordovaPlugin {
             message.put("data", data);
         }  catch (JSONException e) {
             e.printStackTrace();
-
             return false;
         }
 
