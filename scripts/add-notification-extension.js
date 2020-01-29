@@ -3,29 +3,19 @@ const xcode = require('xcode');
 const path = require('path');
 
 module.exports = function(context) {
-    //MODIFY PODFILE
+    overwritePodfile();
 
-    console.log('--------- modify podfile ---------');
+    addNotificationExtension(context);
+};
 
+function overwritePodfile() {
     const sourcePodfile = path.join(__dirname, 'Podfile');
-
     const targetPodfile = 'platforms/ios/Podfile';
 
-    let rd = fs.createReadStream(sourcePodfile);
-    rd.on('error', function(err) {
-        console.log(err);
-    });
+    copyFile(sourcePodfile, targetPodfile);
+}
 
-    let wr = fs.createWriteStream(targetPodfile);
-    wr.on('error', function(err) {
-        console.log(err);
-    });
-    rd.pipe(wr);
-
-    //ADD EXTENSION
-
-    console.log('--------- add notification extension ---------');
-
+function addNotificationExtension(context) {
     const cordovaCommon = context.requireCordovaModule('cordova-common');
     const appConfig = new cordovaCommon.ConfigParser('config.xml');
     const appName = appConfig.name();
@@ -37,16 +27,8 @@ module.exports = function(context) {
         'NotificationService.m',
         `${extName}-Info.plist`
     ];
-    // The directory where the source extension files are stored
     const sourceDir = `extensions/${extName}/`;
 
-    // Wait a few seconds before parsing the project to let some other
-    // asynchronous project file changes complete. Maybe there is a way to get
-    // a promise?
-    console.log(
-        'Waiting a few seconds for other project file changes to finish'
-    );
-    //setTimeout(function() {
     console.log(`Adding ${extName} notification extension to ${appName}`);
     let proj = xcode.project(projPath);
     proj.parse(function(err) {
@@ -54,7 +36,6 @@ module.exports = function(context) {
             console.log(`Error parsing iOS project: ${err}`);
         }
         // Copy in the extension files
-        console.log('Copying in the extension files to the iOS project');
         fs.mkdirSync(`${iosPath}${extName}`);
         extFiles.forEach(function(extFile) {
             const filePath = path.join(
@@ -62,24 +43,13 @@ module.exports = function(context) {
                 '..',
                 `${sourceDir}${extFile}`
             );
-            let rd = fs.createReadStream(filePath);
-            rd.on('error', function(err) {
-                console.log(err);
-            });
 
-            let wr = fs.createWriteStream(`${iosPath}${extName}/${extFile}`);
-            wr.on('error', function(err) {
-                console.log(err);
-            });
-
-            rd.pipe(wr);
+            copyFile(filePath, `${iosPath}${extName}/${extFile}`);
         });
         // Create new PBXGroup for the extension
-        console.log('Creating new PBXGroup for the extension');
         let extGroup = proj.addPbxGroup(extFiles, extName, extName);
         // Add the new PBXGroup to the CustomTemplate group. This makes the
         // files appear in the file explorer in Xcode.
-        console.log('Adding new PBXGroup to CustomTemplate PBXGroup');
         let groups = proj.hash.project.objects['PBXGroup'];
         Object.keys(groups).forEach(function(key) {
             if (groups[key].name === 'CustomTemplate') {
@@ -87,10 +57,7 @@ module.exports = function(context) {
             }
         });
         // Add a target for the extension
-        console.log('Adding the new target');
         let target = proj.addTarget(extName, 'app_extension');
-        // Add build phases to the new target
-        console.log('Adding build phases to the new target');
         proj.addBuildPhase(
             ['NotificationService.m'],
             'PBXSourcesBuildPhase',
@@ -109,9 +76,21 @@ module.exports = function(context) {
             'Frameworks',
             target.uuid
         );
-        console.log('Write the changes to the iOS project file');
+
         fs.writeFileSync(projPath, proj.writeSync());
         console.log(`Added ${extName} notification extension to project`);
     });
-    //}, 3000);
-};
+}
+
+function copyFile(src, dest) {
+    let rd = fs.createReadStream(src);
+    rd.on('error', function(err) {
+        console.log(err);
+    });
+
+    let wr = fs.createWriteStream(dest);
+    wr.on('error', function(err) {
+        console.log(err);
+    });
+    rd.pipe(wr);
+}
