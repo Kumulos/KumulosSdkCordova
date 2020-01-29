@@ -3,22 +3,23 @@ const xcode = require('xcode');
 const path = require('path');
 
 module.exports = function(context) {
-    overwritePodfile();
+    const cordovaCommon = context.requireCordovaModule('cordova-common');
+    const appConfig = new cordovaCommon.ConfigParser('config.xml');
+    const appName = appConfig.name();
 
-    addNotificationExtension(context);
+    overwritePodfile(appName);
+
+    addNotificationExtension(appName);
 };
 
-function overwritePodfile() {
+function overwritePodfile(appName) {
     const sourcePodfile = path.join(__dirname, 'Podfile');
     const targetPodfile = 'platforms/ios/Podfile';
 
     copyFile(sourcePodfile, targetPodfile);
 }
 
-function addNotificationExtension(context) {
-    const cordovaCommon = context.requireCordovaModule('cordova-common');
-    const appConfig = new cordovaCommon.ConfigParser('config.xml');
-    const appName = appConfig.name();
+function addNotificationExtension(appName) {
     const iosPath = 'platforms/ios/';
     const projPath = `${iosPath}${appName}.xcodeproj/project.pbxproj`;
     const extName = 'KumulosNotificationServiceExtension';
