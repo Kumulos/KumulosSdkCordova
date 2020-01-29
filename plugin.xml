@@ -10,6 +10,10 @@
     </js-module>
     <hook type="before_prepare" src="scripts/inject-config.js" />
     <platform name="ios">
+        <!-- <hook type="before_plugin_install" src="scripts/ho.js" /> -->
+        <!-- <hook type="before_plugin_add" src="scripts/ho.js" /> -->
+        <hook type="before_plugin_install" src="scripts/add-notification-extension.js" />
+
         <resource-file src="scripts/kumulos.plist" target="kumulos.plist" />
         <config-file parent="/*" target="config.xml">
             <feature name="KumulosSDKPlugin">
@@ -36,7 +40,8 @@
                 <source url="https://github.com/CocoaPods/Specs.git"/>
             </config>
             <pods>
-                <pod name="KumulosSdkObjectiveC" spec="2.2.1" />
+                <!-- <pod name="KumulosSdkObjectiveC" spec="4.0.0" />
+                <pod name="KumulosSdkObjectiveCExtension" spec="4.0.0" /> -->
             </pods>
         </podspec>
     </platform>
