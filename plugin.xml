@@ -10,8 +10,6 @@
     </js-module>
     <hook type="before_prepare" src="scripts/inject-config.js" />
     <platform name="ios">
-        <!-- <hook type="before_plugin_install" src="scripts/ho.js" /> -->
-        <!-- <hook type="before_plugin_add" src="scripts/ho.js" /> -->
         <hook type="before_plugin_install" src="scripts/add-notification-extension.js" />
 
         <resource-file src="scripts/kumulos.plist" target="kumulos.plist" />
@@ -40,8 +38,7 @@
                 <source url="https://github.com/CocoaPods/Specs.git"/>
             </config>
             <pods>
-                <!-- <pod name="KumulosSdkObjectiveC" spec="4.0.0" />
-                <pod name="KumulosSdkObjectiveCExtension" spec="4.0.0" /> -->
+                <!-- Podfile copied, but podspec is still needed for 'pod install' to run-->
             </pods>
         </podspec>
     </platform>
