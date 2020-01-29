@@ -6,7 +6,7 @@
 //  Copyright © 2019 Kumulos. All rights reserved.
 //
 
-@import KumulosSDKExtension;
+#import <KumulosSDKExtension/KumulosNotificationService.h>
 #import "NotificationService.h"
 
 @interface NotificationService ()
