@@ -16,7 +16,17 @@ function overwritePodfile(appName) {
     const sourcePodfile = path.join(__dirname, 'Podfile');
     const targetPodfile = 'platforms/ios/Podfile';
 
-    copyFile(sourcePodfile, targetPodfile);
+    const podfileTemplate = fs.readFileSync(sourcePodfile, {
+        encoding: 'utf-8'
+    });
+    const podfileStr = podfileTemplate.split('{{APP_NAME}}').join(appName);
+
+    //this should be async
+    fs.writeFile(targetPodfile, podfileStr, err => {
+        if (err) {
+            console.log(err);
+        }
+    });
 }
 
 function addNotificationExtension(appName) {
@@ -36,7 +46,7 @@ function addNotificationExtension(appName) {
         if (err) {
             console.log(`Error parsing iOS project: ${err}`);
         }
-        // Copy in the extension files
+
         fs.mkdirSync(`${iosPath}${extName}`);
         extFiles.forEach(function(extFile) {
             const filePath = path.join(
@@ -47,18 +57,17 @@ function addNotificationExtension(appName) {
 
             copyFile(filePath, `${iosPath}${extName}/${extFile}`);
         });
-        // Create new PBXGroup for the extension
+
         let extGroup = proj.addPbxGroup(extFiles, extName, extName);
-        // Add the new PBXGroup to the CustomTemplate group. This makes the
-        // files appear in the file explorer in Xcode.
         let groups = proj.hash.project.objects['PBXGroup'];
         Object.keys(groups).forEach(function(key) {
             if (groups[key].name === 'CustomTemplate') {
                 proj.addToPbxGroup(extGroup.uuid, key);
             }
         });
-        // Add a target for the extension
+
         let target = proj.addTarget(extName, 'app_extension');
+
         proj.addBuildPhase(
             ['NotificationService.m'],
             'PBXSourcesBuildPhase',

@@ -3,12 +3,12 @@ source 'https://github.com/CocoaPods/Specs.git'
 platform :ios, '10.0'
 
 # TODO: make it template
-target 'CordovaTest' do
-	project 'CordovaTest.xcodeproj'
+target '{{APP_NAME}}' do
+	project '{{APP_NAME}}.xcodeproj'
     pod 'KumulosSdkObjectiveC', '4.0.0'
 end
 
 target 'KumulosNotificationServiceExtension' do
-	project 'CordovaTest.xcodeproj'
+	project '{{APP_NAME}}.xcodeproj'
 	pod 'KumulosSdkObjectiveCExtension', '4.0.0'
 end
