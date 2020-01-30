@@ -248,6 +248,7 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification) {
     NSString *message = alert[@"body"] ?: [NSNull null];
     NSString *url = notification.url ? [notification.url absoluteString] : nil;
 
+    //TODO: _actionIdentifier
     NSDictionary* push = @{@"id": notification.id,
                            @"title": title,
                            @"message": message,
@@ -303,11 +304,10 @@ BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIAppli
     [config setTargetType:TargetTypeRelease];
 #endif
 
-    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification, KSPushReceivedInForegroundCompletionHandler completionHandler) {
+    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification) {
         if (kumulosPluginInstance) {
             [kumulosPluginInstance sendJsMessageWithType:@"pushReceived" andData:KSPushDictFromModel(notification)];
         }
-        completionHandler(UNNotificationPresentationOptionAlert);
     }];
     [config setPushOpenedHandler:^(KSPushNotification * _Nonnull notification) {
         if (kumulosPluginInstance) {
