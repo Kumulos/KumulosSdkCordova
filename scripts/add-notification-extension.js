@@ -87,6 +87,46 @@ function addNotificationExtension(appName) {
             target.uuid
         );
 
+        // var config = proj.hash.project.objects['XCBuildConfiguration'];
+        // var buildSettingsForApp = null;
+        // for (var ref in config) {
+        //     if (
+        //         config[ref].buildSettings !== undefined &&
+        //         config[ref].buildSettings.PRODUCT_NAME !== undefined
+        //     ) {
+        //         console.log(config[ref].buildSettings.PRODUCT_NAME);
+        //         if (config[ref].buildSettings.PRODUCT_NAME.includes(appName)) {
+        //             buildSettingsForApp =
+        //                 proj.hash.project.objects['XCBuildConfiguration'][ref]
+        //                     .buildSettings;
+        //         }
+        //     }
+        // }
+        // if (buildSettingsForApp == null) {
+        //     console.log('proval');
+        // } else {
+        //     console.log(buildSettingsForApp);
+        // }
+        // for (var ref in config) {
+        //     if (
+        //         config[ref].buildSettings !== undefined &&
+        //         config[ref].buildSettings.PRODUCT_NAME !== undefined &&
+        //         config[ref].buildSettings.PRODUCT_NAME.includes(extName)
+        //     ) {
+        //         // setup bundle id and team correctly
+        //         proj.hash.project.objects['XCBuildConfiguration'][
+        //             ref
+        //         ].buildSettings['DEVELOPMENT_TEAM'] = 'AY85FBK9Q6';
+        //         //buildSettingsForApp['DEVELOPMENT_TEAM']; //'AY85FBK9Q6'; //TODO: take value
+        //         proj.hash.project.objects['XCBuildConfiguration'][
+        //             ref
+        //         ].buildSettings['PRODUCT_BUNDLE_IDENTIFIER'] =
+        //             'com.kumulos.dev.inappmessaging.KumulosNotificationServiceExtension';
+        //         // buildSettingsForApp['PRODUCT_BUNDLE_IDENTIFIER'] +
+        //         // '.KumulosNotificationServiceExtension';
+        //     }
+        // }
+
         fs.writeFileSync(projPath, proj.writeSync());
         console.log(`Added ${extName} notification extension to project`);
     });

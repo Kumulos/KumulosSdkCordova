@@ -39,6 +39,8 @@
             </config>
             <pods>
                 <!-- Podfile copied, but podspec is still needed for 'pod install' to run-->
+                <!-- <pod name="KumulosSdkObjectiveC" spec="4.0.0" /> -->
+                <!-- <pod name="KumulosSdkObjectiveCExtension" spec="4.0.0" /> -->
             </pods>
         </podspec>
     </platform>
