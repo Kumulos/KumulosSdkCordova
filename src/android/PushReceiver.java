@@ -31,11 +31,6 @@ public class PushReceiver extends PushBroadcastReceiver {
                  message.put("actionId", actionId);
             }
 
-            String pictureUrl = pushMessage.getPictureUrl();
-            if (pictureUrl != null){
-                message.put("pictureUrl", pictureUrl);
-            }
-
             message.put("data", pushMessage.getData());
         } catch (JSONException e) {
             e.printStackTrace();
