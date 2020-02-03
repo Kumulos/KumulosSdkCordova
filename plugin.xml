@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin id="cordova-plugin-kumulos-sdk" version="4.0.1" 
-    xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+<plugin id="cordova-plugin-kumulos-sdk" version="4.1.0"
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <name>KumulosSDKPlugin</name>
     <asset src="www/vendors~raven-js.bundle.js" target="plugins/cordova-plugin-kumulos-sdk/www/vendors~raven-js.bundle.js" />
@@ -36,7 +36,7 @@
                 <source url="https://github.com/CocoaPods/Specs.git"/>
             </config>
             <pods>
-                <pod name="KumulosSdkObjectiveC" spec="2.2.1" />
+                <pod name="KumulosSdkObjectiveC" spec="4.0.0" />
             </pods>
         </podspec>
     </platform>
@@ -60,6 +60,7 @@
                 <intent-filter>
                     <action android:name="com.kumulos.push.RECEIVED" />
                     <action android:name="com.kumulos.push.OPENED" />
+                    <action android:name="com.kumulos.push.BUTTON_CLICKED" />
                 </intent-filter>
             </receiver>
 

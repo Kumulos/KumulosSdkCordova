@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 public class KumulosInitProvider extends ContentProvider {
 
-    private static final String SDK_VERSION = "4.0.1";
+    private static final String SDK_VERSION = "4.1.0";
     private static final int RUNTIME_TYPE = 3;
     private static final int SDK_TYPE = 6;
 
@@ -65,6 +65,8 @@ public class KumulosInitProvider extends ContentProvider {
         if (IN_APP_AUTO_ENROLL.equals(inAppConsentStrategy) || IN_APP_EXPLICIT_BY_USER.equals(inAppConsentStrategy)) {
             KumulosInApp.setDeepLinkHandler(new KumulosSDKPlugin.InAppDeepLinkHandler());
         }
+
+        Kumulos.setPushActionHandler(new PushReceiver.PushActionHandler());
 
         JSONObject runtimeInfo = new JSONObject();
         JSONObject sdkInfo = new JSONObject();
