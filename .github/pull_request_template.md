@@ -11,6 +11,7 @@
 Prepare:
 
 -   [ ] Detail any breaking changes. Breaking changes require a new major version number
+-   [ ] Update type declarations in index.d.ts
 
 Bump versions in:
 
