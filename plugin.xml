@@ -36,7 +36,7 @@
                 <source url="https://github.com/CocoaPods/Specs.git"/>
             </config>
             <pods>
-                <pod name="KumulosSdkObjectiveC" spec="4.0.0" />
+                <pod name="KumulosSdkObjectiveC" spec="4.2.2" />
             </pods>
         </podspec>
     </platform>
