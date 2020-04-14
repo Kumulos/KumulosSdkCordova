@@ -62,6 +62,8 @@ export class PushChannelManager {
 
     /**
      * Subscribes to the channels given by unique ID
+     *
+     *  Channels that don't exist will be created.
      */
     subscribe(uuids: string[]): Promise<Response> {
         return this.makeSubscriptionRequest('POST', uuids);
