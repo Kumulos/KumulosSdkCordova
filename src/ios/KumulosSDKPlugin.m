@@ -250,9 +250,10 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
                 [self.commandDelegate
                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
                     callbackId:command.callbackId];
+                return;
             }
 
-            return;
+            break;
         }
     }
 
