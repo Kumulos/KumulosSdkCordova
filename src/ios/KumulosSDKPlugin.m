@@ -5,7 +5,7 @@
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
-static const NSString* KSCordovaSdkVersion = @"4.1.0";
+static const NSString* KSCordovaSdkVersion = @"4.2.0";
 static IMP KSexistingAppDidLaunchDelegate = NULL;
 
 static CDVInvokedUrlCommand* KSjsCordovaCommand = nil;
@@ -36,6 +36,7 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification);
 -(void)inAppUpdateUserConsent:(CDVInvokedUrlCommand*)command;
 -(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command;
 -(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command;
+-(void)inAppDeleteMessageFromInbox:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -229,6 +230,30 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
             } else {
                 break;
             }
+        }
+    }
+
+    [self.commandDelegate
+     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+     callbackId:command.callbackId];
+}
+
+-(void)inAppDeleteMessageFromInbox:(CDVInvokedUrlCommand*)command {
+    NSNumber* messageId = command.arguments[0];
+
+    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+    for (KSInAppInboxItem* msg in inboxItems) {
+        if ([msg.id isEqualToNumber:messageId]) {
+             BOOL result = [KumulosInApp deleteMessageFromInbox:msg];
+
+            if (result) {
+                [self.commandDelegate
+                    sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                    callbackId:command.callbackId];
+                return;
+            }
+
+            break;
         }
     }
 

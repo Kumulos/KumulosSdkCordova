@@ -261,6 +261,20 @@ const Kumulos = {
         });
     },
     /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppDeleteMessageFromInbox: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppDeleteMessageFromInbox',
+                [message.id]
+            );
+        });
+    },
+    /**
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.

@@ -50,6 +50,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_IN_APP_UPDATE_CONSENT = "inAppUpdateUserConsent";
     private static final String ACTION_IN_APP_GET_INBOX_ITEMS = "inAppGetInboxItems";
     private static final String ACTION_IN_APP_PRESENT_INBOX_MESSAGE = "inAppPresentInboxMessage";
+    private static final String ACTION_IN_APP_DELETE_INBOX_MESSAGE = "inAppDeleteMessageFromInbox";
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -96,6 +97,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 return true;
             case ACTION_IN_APP_PRESENT_INBOX_MESSAGE:
                 this.inAppPresentInboxMessage(args, callbackContext);
+                return true;
+            case ACTION_IN_APP_DELETE_INBOX_MESSAGE:
+                this.inAppDeleteMessageFromInbox(args, callbackContext);
                 return true;
             default:
                 return false;
@@ -305,6 +309,31 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 } else {
                     break;
                 }
+            }
+        }
+
+        callbackContext.error("Message not found or not available");
+    }
+
+     private void inAppDeleteMessageFromInbox(JSONArray args, CallbackContext callbackContext) {
+        int messageId = args.optInt(0, -1);
+
+        if (messageId == -1) {
+            callbackContext.error("Message not found or not available");
+            return;
+        }
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
+        for (InAppInboxItem item : items) {
+            if (item.getId() == messageId) {
+                Boolean result = KumulosInApp.deleteMessageFromInbox(cordova.getContext(), item);
+
+                if (result) {
+                    callbackContext.success();
+                    return;
+                }
+
+                break;
             }
         }
 

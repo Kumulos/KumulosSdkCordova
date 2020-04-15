@@ -15,8 +15,8 @@ android {
 }
 
 dependencies {
-    debugImplementation 'com.kumulos.android:kumulos-android-debug:8.4.1'
-    releaseImplementation 'com.kumulos.android:kumulos-android-release:8.4.1'
+    debugImplementation 'com.kumulos.android:kumulos-android-debug:8.5.0'
+    releaseImplementation 'com.kumulos.android:kumulos-android-release:8.5.0'
     implementation 'com.google.firebase:firebase-core:16.0.7'
 }
 

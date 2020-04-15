@@ -97,6 +97,10 @@ declare const Kumulos: {
      */
     inAppPresentInboxMessage: (message: InAppInboxItem) => Promise<void>;
     /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppDeleteMessageFromInbox: (message: InAppInboxItem) => Promise<void>;
+    /**
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.
