@@ -330,9 +330,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
                 if (result) {
                     callbackContext.success();
-                } else {
-                    break;
                 }
+
+                return;
             }
         }
 
