@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 public class KumulosInitProvider extends ContentProvider {
 
-    private static final String SDK_VERSION = "4.2.1";
+    private static final String SDK_VERSION = "4.2.2";
     private static final int RUNTIME_TYPE = 3;
     private static final int SDK_TYPE = 6;
 
