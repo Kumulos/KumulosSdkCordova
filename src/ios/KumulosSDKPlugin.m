@@ -5,12 +5,10 @@
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
-static const NSString* KSCordovaSdkVersion = @"4.2.2";
-static IMP KSexistingAppDidLaunchDelegate = NULL;
+static const NSString* KSCordovaSdkVersion = @"4.2.0";
 
 static CDVInvokedUrlCommand* KSjsCordovaCommand = nil;
 static KSPushNotification* KSpendingPush = nil;
-BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions);
 
 NSDictionary* KSPushDictFromModel(KSPushNotification* notification);
 
@@ -47,14 +45,69 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        Class class = CDVAppDelegate.class;
 
-        // Did launch delegate
-        SEL didLaunchSelector = @selector(application:didFinishLaunchingWithOptions:);
-        const char *launchTypes = method_getTypeEncoding(class_getInstanceMethod(class, didLaunchSelector));
-
-        KSexistingAppDidLaunchDelegate = class_replaceMethod(class, didLaunchSelector, (IMP) kumulos_applicationDidFinishLaunchingWithOptions, launchTypes);
+        [[NSNotificationCenter defaultCenter] addObserver: self
+                                                    selector: @selector(didFinishLaunching:) name: UIApplicationDidFinishLaunchingNotification object: nil];
     });
+}
+
++ (void) didFinishLaunching: (NSNotification*) n
+{
+    NSString* configPath = [NSBundle.mainBundle pathForResource:@"kumulos" ofType:@"plist"];
+    if (!configPath) {
+        NSLog(@"kumulos.plist NOT FOUND");
+        return;
+    }
+
+    NSDictionary* configValues = [[NSDictionary alloc] initWithContentsOfFile:configPath];
+
+    if (n.userInfo){
+        NSDictionary* userInfoDict = n.userInfo[UIApplicationLaunchOptionsRemoteNotificationKey];
+        if (userInfoDict != nil) {
+            KSpendingPush = [KSPushNotification fromUserInfo:userInfoDict];
+        }
+    }
+
+    KSConfig* config = [KSConfig configWithAPIKey:configValues[@"apiKey"] andSecretKey:configValues[@"secretKey"]];
+
+    if (configValues[@"enableCrashReporting"]) {
+        [config enableCrashReporting];
+    }
+
+    if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"auto-enroll"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyAutoEnroll];
+    } else if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"explicit-by-user"]) {
+        [config enableInAppMessaging:KSInAppConsentStrategyExplicitByUser];
+    }
+
+    [config setRuntimeInfo:@{@"id": @(3), @"version": CDV_VERSION}];
+    [config setSdkInfo:@{@"id": @(6), @"version": KSCordovaSdkVersion}];
+
+#if DEBUG
+    [config setTargetType:TargetTypeDebug];
+#else
+    [config setTargetType:TargetTypeRelease];
+#endif
+
+    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"pushReceived" andData:KSPushDictFromModel(notification)];
+        }
+    }];
+    [config setPushOpenedHandler:^(KSPushNotification * _Nonnull notification) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"pushOpened" andData:KSPushDictFromModel(notification)];
+        }
+    }];
+    [config setInAppDeepLinkHandler:^(NSDictionary * _Nonnull data) {
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"inAppDeepLinkPressed" andData:data];
+        }
+    }];
+
+    [Kumulos initializeWithConfig:config];
+
+    return;
 }
 
 - (void)pluginInitialize {
@@ -286,69 +339,3 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification) {
 
     return push;
 }
-
-#pragma mark - SDK Initialization Hook
-
-BOOL kumulos_applicationDidFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication* application, NSDictionary* launchOptions) {
-
-    BOOL result = YES;
-
-    if (KSexistingAppDidLaunchDelegate) {
-        result = ((BOOL(*)(id,SEL,UIApplication*, NSDictionary*))KSexistingAppDidLaunchDelegate)(self, _cmd, application, launchOptions);
-    }
-
-    NSString* configPath = [NSBundle.mainBundle pathForResource:@"kumulos" ofType:@"plist"];
-    if (!configPath) {
-        NSLog(@"kumulos.plist NOT FOUND");
-        return result;
-    }
-
-    NSDictionary* configValues = [[NSDictionary alloc] initWithContentsOfFile:configPath];
-
-    NSDictionary *userInfo = launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey];
-    if (userInfo != nil) {
-        KSpendingPush = [KSPushNotification fromUserInfo:userInfo];
-    }
-
-    KSConfig* config = [KSConfig configWithAPIKey:configValues[@"apiKey"] andSecretKey:configValues[@"secretKey"]];
-
-    if (configValues[@"enableCrashReporting"]) {
-        [config enableCrashReporting];
-    }
-
-    if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"auto-enroll"]) {
-        [config enableInAppMessaging:KSInAppConsentStrategyAutoEnroll];
-    } else if ([configValues[@"inAppConsentStrategy"] isEqualToString:@"explicit-by-user"]) {
-        [config enableInAppMessaging:KSInAppConsentStrategyExplicitByUser];
-    }
-
-    [config setRuntimeInfo:@{@"id": @(3), @"version": CDV_VERSION}];
-    [config setSdkInfo:@{@"id": @(6), @"version": KSCordovaSdkVersion}];
-
-#if DEBUG
-    [config setTargetType:TargetTypeDebug];
-#else
-    [config setTargetType:TargetTypeRelease];
-#endif
-
-    [config setPushReceivedInForegroundHandler:^(KSPushNotification * _Nonnull notification) {
-        if (kumulosPluginInstance) {
-            [kumulosPluginInstance sendJsMessageWithType:@"pushReceived" andData:KSPushDictFromModel(notification)];
-        }
-    }];
-    [config setPushOpenedHandler:^(KSPushNotification * _Nonnull notification) {
-        if (kumulosPluginInstance) {
-            [kumulosPluginInstance sendJsMessageWithType:@"pushOpened" andData:KSPushDictFromModel(notification)];
-        }
-    }];
-    [config setInAppDeepLinkHandler:^(NSDictionary * _Nonnull data) {
-        if (kumulosPluginInstance) {
-            [kumulosPluginInstance sendJsMessageWithType:@"inAppDeepLinkPressed" andData:data];
-        }
-    }];
-
-    [Kumulos initializeWithConfig:config];
-
-    return result;
-}
-
