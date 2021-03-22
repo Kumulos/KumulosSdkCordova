@@ -1,6 +1,5 @@
 /********* KumulosSDKPlugin.m Cordova Plugin Implementation *******/
 
-#import <objc/runtime.h>
 #import <Cordova/CDV.h>
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
@@ -45,9 +44,10 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-
-        [[NSNotificationCenter defaultCenter] addObserver: self
-                                                    selector: @selector(didFinishLaunching:) name: UIApplicationDidFinishLaunchingNotification object: nil];
+        [NSNotificationCenter.defaultCenter addObserver: self
+                                            selector: @selector(didFinishLaunching:)
+                                            name: UIApplicationDidFinishLaunchingNotification
+                                            object: nil];
     });
 }
 
