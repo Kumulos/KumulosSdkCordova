@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.app.TaskStackBuilder;
 
 import com.kumulos.android.Kumulos;
 import com.kumulos.android.PushBroadcastReceiver;
@@ -83,19 +84,28 @@ public class PushReceiver extends PushBroadcastReceiver {
             return;
         }
 
-        if (null != pushMessage.getUrl()) {
-            launchIntent = new Intent(Intent.ACTION_VIEW, pushMessage.getUrl());
-        }
-
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        addDeepLinkExtras(pushMessage, launchIntent);
-
         if (KumulosSDKPlugin.sCordova != null){
             Intent existingIntent = KumulosSDKPlugin.sCordova.getActivity().getIntent();
             addDeepLinkExtras(pushMessage, existingIntent);
         }
 
-        context.startActivity(launchIntent);
+        if (null != pushMessage.getUrl()) {
+            launchIntent = new Intent(Intent.ACTION_VIEW, pushMessage.getUrl());
+
+            addDeepLinkExtras(pushMessage, launchIntent);
+
+            TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
+            taskStackBuilder.addParentStack(component);
+            taskStackBuilder.addNextIntent(launchIntent);
+            taskStackBuilder.startActivities();
+        }
+        else{
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+            addDeepLinkExtras(pushMessage, launchIntent);
+
+            context.startActivity(launchIntent);
+        }
 
         if (null == KumulosSDKPlugin.jsCallbackContext) {
             KumulosSDKPlugin.pendingPush = pushMessage;
