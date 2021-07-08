@@ -35,6 +35,16 @@ interface InAppInboxItem {
     availableFrom: string | '';
     availableTo: string | '';
     dismissedAt: string | '';
+    isRead: boolean;
+    sentAt?: string;
+    data?: {
+        [key: string]: any;
+    };
+    imageUrl?: string;
+}
+interface InAppInboxSummary {
+    totalCount: number;
+    unreadCount: number;
 }
 declare const Kumulos: {
     /**
@@ -80,26 +90,6 @@ declare const Kumulos: {
      * Unsubscribe from push by removing the token associated with this installation
      */
     pushUnregister: () => void;
-    /**
-     * Opts the user in or out of in-app messaging
-     *
-     * Note the configured consent strategy in SDK initialization must
-     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
-     * exception.
-     */
-    inAppUpdateConsentForUser: (consented: any) => void;
-    /**
-     * Gets a list of available in-app messages sent to the user and stored in the inbox
-     */
-    inAppGetInboxItems: () => Promise<InAppInboxItem>;
-    /**
-     * Presents the given in-app message to the user from the inbox
-     */
-    inAppPresentInboxMessage: (message: InAppInboxItem) => Promise<void>;
-    /**
-     * Presents the given in-app message to the user from the inbox
-     */
-    inAppDeleteMessageFromInbox: (message: InAppInboxItem) => Promise<void>;
     /**
      * Tracks a custom analytics event with Kumulos.
      *
@@ -161,5 +151,38 @@ declare const Kumulos: {
         minor: number;
         proximity?: number;
     }) => void;
+    /**
+     * Opts the user in or out of in-app messaging
+     *
+     * Note the configured consent strategy in SDK initialization must
+     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
+     * exception.
+     */
+    inAppUpdateConsentForUser: (consented: any) => void;
+    /**
+     * Gets a list of available in-app messages sent to the user and stored in the inbox
+     */
+    inAppGetInboxItems: () => Promise<InAppInboxItem>;
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppPresentInboxMessage: (message: InAppInboxItem) => Promise<void>;
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppDeleteMessageFromInbox: (message: InAppInboxItem) => Promise<void>;
+    /**
+     * Marks the given in-app inbox item as read
+     */
+    markAsRead: (message: InAppInboxItem) => Promise<void>;
+    /**
+     * Marks all in-app inbox items as read
+     */
+    markAllInboxItemsAsRead: () => Promise<void>;
+    /**
+     * Gets in-app inbox summary, which includes counts for total and unread messages.
+     * Promise is rejected if operation fails.
+     */
+    getInboxSummary: () => Promise<InAppInboxSummary>;
 };
 export default Kumulos;
