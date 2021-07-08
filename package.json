@@ -28,7 +28,6 @@
     ],
     "author": "Shaoyun Li",
     "license": "MIT",
-    "dependencies": {},
     "devDependencies": {
         "@types/cordova": "0.0.34",
         "babel-core": "^6.17.0",
