@@ -9,6 +9,6 @@ export enum ResponseCode {
     DATABASE_ERROR = 128
 }
 
-export const PushBaseUrl = `https://push.kumulos.com`;
-
 export const ClientBaseUrl = `https://api.kumulos.com`;
+
+export const CrmBaseUrl = 'https://crm.kumulos.com';

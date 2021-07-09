@@ -187,6 +187,7 @@ declare const Kumulos: {
     /**
      * Sets handler which is called when inbox is updated. This includes message marked as read, message opened, deleted, added, evicted or other.
      */
-    setOnInboxUpdatedHandler: (handler: () => void | null) => void;
+    setOnInboxUpdatedHandler: (handler: InboxUpdatedHandler) => void;
 };
+declare type InboxUpdatedHandler = () => void | null;
 export default Kumulos;
