@@ -57,8 +57,6 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_IN_APP_MARK_ALL_INBOX_ITEMS_READ = "inAppMarkAllInboxItemsAsRead";
     private static final String ACTION_IN_APP_GET_INBOX_SUMMARY = "inAppGetInboxSummary";
 
-
-
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -85,10 +83,10 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 this.associateUser(args, callbackContext);
                 return true;
             case ACTION_CLEAR_USER_ASSOCIATION:
-                this.clearUserAssociation(args, callbackContext);
+                this.clearUserAssociation(callbackContext);
                 return true;
             case ACTION_GET_CURRENT_USER_ID:
-                this.getCurrentUserId(args, callbackContext);
+                this.getCurrentUserId(callbackContext);
                 return true;
             case ACTION_PUSH_REGISTER:
                 this.pushRegUnreg(callbackContext, true);
@@ -166,12 +164,12 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
-    private void clearUserAssociation(JSONArray args, CallbackContext callbackContext) {
+    private void clearUserAssociation(CallbackContext callbackContext) {
         Kumulos.clearUserAssociation(this.cordova.getContext());
         callbackContext.success();
     }
 
-    private void getCurrentUserId(JSONArray args, CallbackContext callbackContext) {
+    private void getCurrentUserId(CallbackContext callbackContext) {
         String userId = Kumulos.getCurrentUserIdentifier(this.cordova.getContext());
         callbackContext.success(userId);
     }
@@ -328,6 +326,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
                 if (result == InboxMessagePresentationResult.PRESENTED) {
                     callbackContext.success();
+                    return;
                 } else {
                     break;
                 }
@@ -348,7 +347,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
         for (InAppInboxItem item : items) {
             if (item.getId() == messageId) {
-                Boolean result = KumulosInApp.deleteMessageFromInbox(cordova.getContext(), item);
+                boolean result = KumulosInApp.deleteMessageFromInbox(cordova.getContext(), item);
 
                 if (result) {
                     callbackContext.success();
@@ -373,7 +372,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
         for (InAppInboxItem item : items) {
             if (item.getId() == messageId) {
-                Boolean result = KumulosInApp.markAsRead(cordova.getContext(), item);
+                boolean result = KumulosInApp.markAsRead(cordova.getContext(), item);
 
                 if (result) {
                     callbackContext.success();
