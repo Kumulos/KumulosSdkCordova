@@ -100,19 +100,19 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 this.inAppUpdateConsent(args, callbackContext);
                 return true;
             case ACTION_IN_APP_GET_INBOX_ITEMS:
-                this.inAppGetInboxItems(callbackContext);
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppGetInboxItems(callbackContext));
                 return true;
             case ACTION_IN_APP_PRESENT_INBOX_MESSAGE:
-                this.inAppPresentInboxMessage(args, callbackContext);
+                cordova.getThreadPool().execute(() ->KumulosSDKPlugin.this.inAppPresentInboxMessage(args, callbackContext));
                 return true;
             case ACTION_IN_APP_DELETE_INBOX_MESSAGE:
-                this.inAppDeleteMessageFromInbox(args, callbackContext);
+                cordova.getThreadPool().execute(() ->KumulosSDKPlugin.this.inAppDeleteMessageFromInbox(args, callbackContext));
                 return true;
             case ACTION_IN_APP_MARK_INBOX_ITEM_READ:
-                this.inAppMarkInboxItemRead(args, callbackContext);
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppMarkInboxItemRead(args, callbackContext));
                 return true;
             case ACTION_IN_APP_MARK_ALL_INBOX_ITEMS_READ:
-                this.inAppMarkAllInboxItemsRead(callbackContext);
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppMarkAllInboxItemsRead(callbackContext));
                 return true;
             case ACTION_IN_APP_GET_INBOX_SUMMARY:
                 this.inAppGetInboxSummary(callbackContext);
