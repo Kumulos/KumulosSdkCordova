@@ -407,19 +407,15 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
             try {
                 JSONObject res = new JSONObject();
-                res.put("id", summary.getTotalCount());
-                res.put("title", summary.getUnreadCount());
+                res.put("totalCount", summary.getTotalCount());
+                res.put("unreadCount", summary.getUnreadCount());
                 callbackContext.success(res);
-
             } catch(JSONException e){
                 e.printStackTrace();
                 callbackContext.error(e.getMessage());
             }
         });
     }
-
-
-
 
     static class InAppDeepLinkHandler implements InAppDeepLinkHandlerInterface {
 
@@ -429,4 +425,10 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         }
     }
 
+    static class InboxUpdatedHandler implements KumulosInApp.InAppInboxUpdatedHandler {
+        @Override
+        public void run() {
+           sendMessageToJs("inAppInboxUpdated", null);
+        }
+    }
 }

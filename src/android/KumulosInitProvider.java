@@ -67,6 +67,7 @@ public class KumulosInitProvider extends ContentProvider {
         }
 
         Kumulos.setPushActionHandler(new PushReceiver.PushActionHandler());
+        KumulosInApp.setOnInboxUpdated(new KumulosSDKPlugin.InboxUpdatedHandler());
 
         JSONObject runtimeInfo = new JSONObject();
         JSONObject sdkInfo = new JSONObject();

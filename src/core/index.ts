@@ -64,6 +64,8 @@ let initialized: boolean = false;
 let ravenInstance: any = null;
 let exceptionsDuringInit = [];
 
+let inAppInboxUpdatedHandler: () => void | null = null;
+
 function logException(e, uncaught: boolean, context: {} = undefined) {
     if (!initialized || !currentConfig.enableCrashReporting) {
         console.log(
@@ -90,8 +92,12 @@ function nativeMessageHandler(message?: { type: string; data: any } | string) {
     }
 
     const handlerName = `${message.type}Handler`;
+    if (handlerName === 'inAppInboxUpdatedHandler' && typeof inAppInboxUpdatedHandler === 'function'){
+        inAppInboxUpdatedHandler();
+        return;
+    }
 
-    if (typeof currentConfig[handlerName] == 'function') {
+    if (typeof currentConfig[handlerName] === 'function') {
         currentConfig[handlerName](message.data);
     } else {
         console.log(`Kumulos: No handler defined for '${message.type}' event`);
@@ -399,7 +405,6 @@ const Kumulos = {
             );
         });
     },
-
     /**
      * Marks the given in-app inbox item as read
      */
@@ -428,7 +433,6 @@ const Kumulos = {
             );
         });
     },
-
     /**
      * Gets in-app inbox summary, which includes counts for total and unread messages.
      * Promise is rejected if operation fails.
@@ -443,6 +447,12 @@ const Kumulos = {
                 []
             );
         });
+    },
+    /**
+     * Sets handler which is called when inbox is updated. This includes message marked as read, message opened, deleted, added, evicted or other.
+     */
+    setOnInboxUpdatedHandler: (handler: () => void | null) : void => {
+        inAppInboxUpdatedHandler = handler;
     }
 };
 

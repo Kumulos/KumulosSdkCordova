@@ -184,5 +184,9 @@ declare const Kumulos: {
      * Promise is rejected if operation fails.
      */
     getInboxSummary: () => Promise<InAppInboxSummary>;
+    /**
+     * Sets handler which is called when inbox is updated. This includes message marked as read, message opened, deleted, added, evicted or other.
+     */
+    setOnInboxUpdatedHandler: (handler: () => void | null) => void;
 };
 export default Kumulos;
