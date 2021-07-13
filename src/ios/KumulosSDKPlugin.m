@@ -253,132 +253,142 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 }
 
 -(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command {
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
+    [self.commandDelegate runInBackground:^{
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
 
-    NSDateFormatter* formatter = [NSDateFormatter new];
-    [formatter setTimeStyle:NSDateFormatterFullStyle];
-    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
-    [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+        NSDateFormatter* formatter = [NSDateFormatter new];
+        [formatter setTimeStyle:NSDateFormatterFullStyle];
+        [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+        [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
 
-    for (KSInAppInboxItem* item in inboxItems) {
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        [dict setValuesForKeysWithDictionary:@{@"id": item.id,
-                                               @"title": item.title,
-                                               @"subtitle": item.subtitle,
-                                               @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
-                                               @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
-                                               @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @"",
-                                               @"isRead": @([item isRead])}];
+        for (KSInAppInboxItem* item in inboxItems) {
+            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+            [dict setValuesForKeysWithDictionary:@{@"id": item.id,
+                                                   @"title": item.title,
+                                                   @"subtitle": item.subtitle,
+                                                   @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
+                                                   @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
+                                                   @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @"",
+                                                   @"isRead": @([item isRead])}];
 
-        if (item.sentAt){
-            dict[@"sentAt"] = [formatter stringFromDate:item.sentAt];
+            if (item.sentAt){
+                dict[@"sentAt"] = [formatter stringFromDate:item.sentAt];
+            }
+            if (item.data){
+                dict[@"data"] = item.data;
+            }
+            NSURL* imageUrl = [item getImageUrl];
+            if (imageUrl){
+                dict[@"imageUrl"] = imageUrl.absoluteString;
+            }
+
+            [items addObject:dict];
         }
-        if (item.data){
-            dict[@"data"] = item.data;
-        }
-        NSURL* imageUrl = [item getImageUrl];
-        if (imageUrl){
-            dict[@"imageUrl"] = imageUrl.absoluteString;
-        }
 
-        [items addObject:dict];
-    }
+        CDVPluginResult* result = [CDVPluginResult
+                                   resultWithStatus:CDVCommandStatus_OK
+                                   messageAsArray:items];
 
-    CDVPluginResult* result = [CDVPluginResult
-                               resultWithStatus:CDVCommandStatus_OK
-                               messageAsArray:items];
-
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command {
-    NSNumber* messageId = command.arguments[0];
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
 
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    for (KSInAppInboxItem* msg in inboxItems) {
-        if ([msg.id isEqualToNumber:messageId]) {
-            KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
 
-            if (result == KSInAppMessagePresentationPresented) {
-                [self.commandDelegate
-                 sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-                 callbackId:command.callbackId];
-            } else {
-                break;
+                if (result == KSInAppMessagePresentationPresented) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                } else {
+                    break;
+                }
             }
         }
-    }
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
-     callbackId:command.callbackId];
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+         callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppDeleteMessageFromInbox:(CDVInvokedUrlCommand*)command {
-    NSNumber* messageId = command.arguments[0];
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
 
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    for (KSInAppInboxItem* msg in inboxItems) {
-        if ([msg.id isEqualToNumber:messageId]) {
-            BOOL result = [KumulosInApp deleteMessageFromInbox:msg];
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                BOOL result = [KumulosInApp deleteMessageFromInbox:msg];
 
-            if (result) {
-                [self.commandDelegate
-                 sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-                 callbackId:command.callbackId];
-                return;
+                if (result) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                    return;
+                }
+
+                break;
             }
-
-            break;
         }
-    }
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
-     callbackId:command.callbackId];
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+         callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppMarkAsRead:(CDVInvokedUrlCommand*)command {
-    NSNumber* messageId = command.arguments[0];
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
 
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    for (KSInAppInboxItem* msg in inboxItems) {
-        if ([msg.id isEqualToNumber:messageId]) {
-            BOOL result = [KumulosInApp markAsRead:msg];
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                BOOL result = [KumulosInApp markAsRead:msg];
 
-            if (result) {
-                [self.commandDelegate
-                 sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-                 callbackId:command.callbackId];
+                if (result) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                }
+                else{
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark message as read"]
+                     callbackId:command.callbackId];
+                }
+
+                return;
             }
-            else{
-                [self.commandDelegate
-                 sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark message as read"]
-                 callbackId:command.callbackId];
-            }
-
-            return;
         }
-    }
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found"]
-     callbackId:command.callbackId];
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found"]
+         callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppMarkAllInboxItemsAsRead:(CDVInvokedUrlCommand*)command {
-    BOOL result = [KumulosInApp markAllInboxItemsAsRead];
-    if (result) {
-        [self.commandDelegate
-         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-         callbackId:command.callbackId];
-    }
-    else{
-        [self.commandDelegate
-         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark all messages as read"]
-         callbackId:command.callbackId];
-    }
+    [self.commandDelegate runInBackground:^{
+        BOOL result = [KumulosInApp markAllInboxItemsAsRead];
+        if (result) {
+            [self.commandDelegate
+             sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+             callbackId:command.callbackId];
+        }
+        else{
+            [self.commandDelegate
+             sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark all messages as read"]
+             callbackId:command.callbackId];
+        }
+    }];
 }
 
 -(void)inAppGetInboxSummary:(CDVInvokedUrlCommand*)command {
