@@ -112,7 +112,7 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 
     [KumulosInApp setOnInboxUpdated:^(){
         if (kumulosPluginInstance) {
-            [kumulosPluginInstance sendJsMessageWithType:@"inAppInboxUpdated" andData:nil];
+            [kumulosPluginInstance sendJsMessageWithType:@"inAppInboxUpdated" andData:@{}];
         }
     }];
 
