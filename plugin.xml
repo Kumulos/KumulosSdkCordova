@@ -3,7 +3,7 @@
     xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <name>KumulosSDKPlugin</name>
-    <asset src="www/vendors~raven-js.bundle.js" target="plugins/cordova-plugin-kumulos-sdk/www/vendors~raven-js.bundle.js" />
+    <asset src="www/raven-js.bundle.js" target="plugins/cordova-plugin-kumulos-sdk/www/raven-js.bundle.js" />
     <js-module name="KumulosSDKCore" src="www/kumulos-sdk-core.js" />
     <js-module name="KumulosSDK" src="www/kumulos-sdk-plugin.js">
         <clobbers target="window.Kumulos" />
