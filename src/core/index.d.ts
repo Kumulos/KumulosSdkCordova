@@ -174,16 +174,16 @@ declare const Kumulos: {
     /**
      * Marks the given in-app inbox item as read
      */
-    markAsRead: (message: InAppInboxItem) => Promise<void>;
+    inAppMarkAsRead: (message: InAppInboxItem) => Promise<void>;
     /**
      * Marks all in-app inbox items as read
      */
-    markAllInboxItemsAsRead: () => Promise<void>;
+    inAppMarkAllInboxItemsAsRead: () => Promise<void>;
     /**
      * Gets in-app inbox summary, which includes counts for total and unread messages.
      * Promise is rejected if operation fails.
      */
-    getInboxSummary: () => Promise<InAppInboxSummary>;
+    inAppGetInboxSummary: () => Promise<InAppInboxSummary>;
     /**
      * Sets handler which is called when inbox is updated. This includes message marked as read, message opened, deleted, added, evicted or other.
      */

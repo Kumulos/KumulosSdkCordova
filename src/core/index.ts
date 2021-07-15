@@ -408,7 +408,7 @@ const Kumulos = {
     /**
      * Marks the given in-app inbox item as read
      */
-    markAsRead: (message: InAppInboxItem): Promise<void> => {
+    inAppMarkAsRead: (message: InAppInboxItem): Promise<void> => {
         return new Promise((resolve, reject) => {
             cordova.exec(
                 resolve,
@@ -422,7 +422,7 @@ const Kumulos = {
     /**
      * Marks all in-app inbox items as read
      */
-    markAllInboxItemsAsRead: (): Promise<void> => {
+    inAppMarkAllInboxItemsAsRead: (): Promise<void> => {
         return new Promise((resolve, reject) => {
             cordova.exec(
                 resolve,
@@ -437,7 +437,7 @@ const Kumulos = {
      * Gets in-app inbox summary, which includes counts for total and unread messages.
      * Promise is rejected if operation fails.
      */
-    getInboxSummary: (): Promise<InAppInboxSummary> => {
+    inAppGetInboxSummary: (): Promise<InAppInboxSummary> => {
         return new Promise((resolve, reject) => {
             cordova.exec(
                 resolve,
