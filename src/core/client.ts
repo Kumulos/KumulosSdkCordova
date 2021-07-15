@@ -27,7 +27,7 @@ export class Client {
         });
     }
 
-    public getUserIdentifier(): Promise<string> {
+    public getCurrentUserIdentifier(): Promise<string> {
         return new Promise((resolve, reject) => {
             cordova.exec(resolve, reject, NativeModuleName, 'getCurrentUserId', []);
         });

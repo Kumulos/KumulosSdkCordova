@@ -44,7 +44,7 @@ export class PushChannelManager {
         method: HttpMethod,
         uuids: string[]
     ): Promise<Response> {
-        return this.client.getUserIdentifier().then(userIdentifier => {
+        return this.client.getCurrentUserIdentifier().then(userIdentifier => {
             const url = `${Enums.CrmBaseUrl}/v1/users/${encodeURIComponent(userIdentifier)}/channels/subscriptions`;
             const params = {
                 uuids
@@ -97,7 +97,7 @@ export class PushChannelManager {
      */
     listChannels(): Promise<PushChannel[]> {
         return this.client
-            .getUserIdentifier()
+            .getCurrentUserIdentifier()
             .then<Response>(userIdentifier => {
                 const url = `${Enums.CrmBaseUrl}/v1/users/${encodeURIComponent(userIdentifier)}/channels`;
                 const options = {
@@ -129,7 +129,7 @@ export class PushChannelManager {
         }
 
         return this.client
-            .getUserIdentifier()
+            .getCurrentUserIdentifier()
             .then<Response>(userIdentifier => {
                 const url = `${Enums.CrmBaseUrl}/v1/channels`;
 
