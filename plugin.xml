@@ -46,6 +46,7 @@
                 <param name="android-package" value="com.kumulos.cordova.android.KumulosSDKPlugin" />
                 <param name="onload" value="true" />
             </feature>
+            <preference name="AndroidXEnabled" value="true" />
         </config-file>
         <config-file parent="/manifest/application" target="AndroidManifest.xml">
             <!-- Kumulos FCM handler -->
