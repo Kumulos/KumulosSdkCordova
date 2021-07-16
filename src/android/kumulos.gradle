@@ -44,4 +44,14 @@ ext.postBuildExtras = {
             apply plugin: com.google.gms.googleservices.GoogleServicesPlugin
         }
     }
+
+    def firebaseBomVersion = '28.2.0'
+    dependencies {
+        if (project.hasProperty('KumulosFirebaseBoMVersion')){
+            firebaseBomVersion = project.ext.get("KumulosFirebaseBoMVersion")
+        }
+
+        implementation platform("com.google.firebase:firebase-bom:$firebaseBomVersion")
+        implementation 'com.google.firebase:firebase-messaging'
+    }
 }
