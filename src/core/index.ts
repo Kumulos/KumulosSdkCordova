@@ -366,7 +366,7 @@ const Kumulos = {
     /**
      * Gets a list of available in-app messages sent to the user and stored in the inbox
      */
-    inAppGetInboxItems: (): Promise<InAppInboxItem> => {
+    inAppGetInboxItems: (): Promise<InAppInboxItem[]> => {
         return new Promise((resolve, reject) => {
             cordova.exec(
                 resolve,

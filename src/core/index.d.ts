@@ -162,7 +162,7 @@ declare const Kumulos: {
     /**
      * Gets a list of available in-app messages sent to the user and stored in the inbox
      */
-    inAppGetInboxItems: () => Promise<InAppInboxItem>;
+    inAppGetInboxItems: () => Promise<InAppInboxItem[]>;
     /**
      * Presents the given in-app message to the user from the inbox
      */
