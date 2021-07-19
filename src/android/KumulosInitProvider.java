@@ -6,8 +6,8 @@ import android.content.ContentValues;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.kumulos.android.Kumulos;
@@ -20,7 +20,7 @@ import org.json.JSONObject;
 
 public class KumulosInitProvider extends ContentProvider {
 
-    private static final String SDK_VERSION = "4.2.4";
+    private static final String SDK_VERSION = "5.0.0";
     private static final int RUNTIME_TYPE = 3;
     private static final int SDK_TYPE = 6;
 
@@ -67,6 +67,7 @@ public class KumulosInitProvider extends ContentProvider {
         }
 
         Kumulos.setPushActionHandler(new PushReceiver.PushActionHandler());
+        KumulosInApp.setOnInboxUpdated(new KumulosSDKPlugin.InboxUpdatedHandler());
 
         JSONObject runtimeInfo = new JSONObject();
         JSONObject sdkInfo = new JSONObject();

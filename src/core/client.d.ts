@@ -6,6 +6,7 @@ export declare class Client {
     readonly pushChannels: Push.PushChannelManager;
     constructor(apiKey: string, secretKey: string);
     getInstallId(): Promise<string>;
+    getCurrentUserIdentifier(): Promise<string>;
     call(methodName: string, params?: {}): Promise<any>;
     private doCall;
     private checkStatus;

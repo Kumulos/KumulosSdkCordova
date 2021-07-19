@@ -2,7 +2,7 @@ package com.kumulos.cordova.android;
 
 import android.content.Context;
 import android.location.Location;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.kumulos.android.InAppDeepLinkHandlerInterface;
 import com.kumulos.android.InAppInboxItem;
@@ -11,6 +11,7 @@ import com.kumulos.android.Kumulos;
 import com.kumulos.android.KumulosInApp;
 import com.kumulos.android.KumulosInApp.InboxMessagePresentationResult;
 import com.kumulos.android.PushMessage;
+import com.kumulos.android.InAppInboxSummary;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -26,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.net.URL;
 
 public class KumulosSDKPlugin extends CordovaPlugin {
 
@@ -51,6 +53,9 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     private static final String ACTION_IN_APP_GET_INBOX_ITEMS = "inAppGetInboxItems";
     private static final String ACTION_IN_APP_PRESENT_INBOX_MESSAGE = "inAppPresentInboxMessage";
     private static final String ACTION_IN_APP_DELETE_INBOX_MESSAGE = "inAppDeleteMessageFromInbox";
+    private static final String ACTION_IN_APP_MARK_INBOX_ITEM_READ = "inAppMarkAsRead";
+    private static final String ACTION_IN_APP_MARK_ALL_INBOX_ITEMS_READ = "inAppMarkAllInboxItemsAsRead";
+    private static final String ACTION_IN_APP_GET_INBOX_SUMMARY = "inAppGetInboxSummary";
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -78,10 +83,10 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 this.associateUser(args, callbackContext);
                 return true;
             case ACTION_CLEAR_USER_ASSOCIATION:
-                this.clearUserAssociation(args, callbackContext);
+                this.clearUserAssociation(callbackContext);
                 return true;
             case ACTION_GET_CURRENT_USER_ID:
-                this.getCurrentUserId(args, callbackContext);
+                this.getCurrentUserId(callbackContext);
                 return true;
             case ACTION_PUSH_REGISTER:
                 this.pushRegUnreg(callbackContext, true);
@@ -93,13 +98,22 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 this.inAppUpdateConsent(args, callbackContext);
                 return true;
             case ACTION_IN_APP_GET_INBOX_ITEMS:
-                this.inAppGetInboxItems(callbackContext);
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppGetInboxItems(callbackContext));
                 return true;
             case ACTION_IN_APP_PRESENT_INBOX_MESSAGE:
-                this.inAppPresentInboxMessage(args, callbackContext);
+                cordova.getThreadPool().execute(() ->KumulosSDKPlugin.this.inAppPresentInboxMessage(args, callbackContext));
                 return true;
             case ACTION_IN_APP_DELETE_INBOX_MESSAGE:
-                this.inAppDeleteMessageFromInbox(args, callbackContext);
+                cordova.getThreadPool().execute(() ->KumulosSDKPlugin.this.inAppDeleteMessageFromInbox(args, callbackContext));
+                return true;
+            case ACTION_IN_APP_MARK_INBOX_ITEM_READ:
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppMarkInboxItemRead(args, callbackContext));
+                return true;
+            case ACTION_IN_APP_MARK_ALL_INBOX_ITEMS_READ:
+                cordova.getThreadPool().execute(() -> KumulosSDKPlugin.this.inAppMarkAllInboxItemsRead(callbackContext));
+                return true;
+            case ACTION_IN_APP_GET_INBOX_SUMMARY:
+                this.inAppGetInboxSummary(callbackContext);
                 return true;
             default:
                 return false;
@@ -150,12 +164,12 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
-    private void clearUserAssociation(JSONArray args, CallbackContext callbackContext) {
+    private void clearUserAssociation(CallbackContext callbackContext) {
         Kumulos.clearUserAssociation(this.cordova.getContext());
         callbackContext.success();
     }
 
-    private void getCurrentUserId(JSONArray args, CallbackContext callbackContext) {
+    private void getCurrentUserId(CallbackContext callbackContext) {
         String userId = Kumulos.getCurrentUserIdentifier(this.cordova.getContext());
         callbackContext.success(userId);
     }
@@ -246,7 +260,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
     }
 
     private void inAppGetInboxItems(CallbackContext callbackContext) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         List<InAppInboxItem> items = KumulosInApp.getInboxItems(cordova.getContext());
@@ -258,10 +272,16 @@ public class KumulosSDKPlugin extends CordovaPlugin {
                 mapped.put("id", item.getId());
                 mapped.put("title", item.getTitle());
                 mapped.put("subtitle", item.getSubtitle());
+                mapped.put("isRead", item.isRead());
+                mapped.put("sentAt", formatter.format(item.getSentAt()));
 
                 Date availableFrom = item.getAvailableFrom();
                 Date availableTo = item.getAvailableTo();
                 Date dismissedAt = item.getDismissedAt();
+                mapped.put("data", item.getData());
+
+                URL imageUrl = item.getImageUrl();
+                mapped.put("imageUrl", imageUrl == null ? null : imageUrl.toString());
 
                 if (null == availableFrom) {
                     mapped.put("availableFrom", "");
@@ -306,6 +326,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
 
                 if (result == InboxMessagePresentationResult.PRESENTED) {
                     callbackContext.success();
+                    return;
                 } else {
                     break;
                 }
@@ -315,7 +336,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.error("Message not found or not available");
     }
 
-     private void inAppDeleteMessageFromInbox(JSONArray args, CallbackContext callbackContext) {
+    private void inAppDeleteMessageFromInbox(JSONArray args, CallbackContext callbackContext) {
         int messageId = args.optInt(0, -1);
 
         if (messageId == -1) {
@@ -326,7 +347,7 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
         for (InAppInboxItem item : items) {
             if (item.getId() == messageId) {
-                Boolean result = KumulosInApp.deleteMessageFromInbox(cordova.getContext(), item);
+                boolean result = KumulosInApp.deleteMessageFromInbox(cordova.getContext(), item);
 
                 if (result) {
                     callbackContext.success();
@@ -340,6 +361,61 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         callbackContext.error("Message not found or not available");
     }
 
+    private void inAppMarkInboxItemRead(JSONArray args, CallbackContext callbackContext) {
+        int messageId = args.optInt(0, -1);
+
+        if (messageId == -1) {
+            callbackContext.error("Message not found or not available");
+            return;
+        }
+
+        List<InAppInboxItem> items = KumulosInApp.getInboxItems(this.cordova.getContext());
+        for (InAppInboxItem item : items) {
+            if (item.getId() == messageId) {
+                boolean result = KumulosInApp.markAsRead(cordova.getContext(), item);
+
+                if (result) {
+                    callbackContext.success();
+                }
+                else{
+                    callbackContext.error("Failed to mark message as read");
+                }
+                return;
+            }
+        }
+
+        callbackContext.error("Message not found or not available");
+    }
+
+    private void inAppMarkAllInboxItemsRead(CallbackContext callbackContext) {
+        boolean result = KumulosInApp.markAllInboxItemsAsRead(cordova.getContext());
+        if (result) {
+            callbackContext.success();
+        }
+        else {
+            callbackContext.error("Failed to mark all messages as read");
+        }
+    }
+
+    private void inAppGetInboxSummary(CallbackContext callbackContext) {
+        KumulosInApp.getInboxSummaryAsync(cordova.getContext(), (InAppInboxSummary summary) -> {
+            if (summary == null){
+                callbackContext.error("Could not get inbox summary");
+                return;
+            }
+
+            try {
+                JSONObject res = new JSONObject();
+                res.put("totalCount", summary.getTotalCount());
+                res.put("unreadCount", summary.getUnreadCount());
+                callbackContext.success(res);
+            } catch(JSONException e){
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+        });
+    }
+
     static class InAppDeepLinkHandler implements InAppDeepLinkHandlerInterface {
 
         @Override
@@ -348,4 +424,10 @@ public class KumulosSDKPlugin extends CordovaPlugin {
         }
     }
 
+    static class InboxUpdatedHandler implements KumulosInApp.InAppInboxUpdatedHandler {
+        @Override
+        public void run() {
+           sendMessageToJs("inAppInboxUpdated", null);
+        }
+    }
 }

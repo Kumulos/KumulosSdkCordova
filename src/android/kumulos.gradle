@@ -15,9 +15,8 @@ android {
 }
 
 dependencies {
-    debugImplementation 'com.kumulos.android:kumulos-android-debug:8.5.0'
-    releaseImplementation 'com.kumulos.android:kumulos-android-release:8.5.0'
-    implementation 'com.google.firebase:firebase-core:16.0.7'
+    debugImplementation 'com.kumulos.android:kumulos-android-debug:12.0.0'
+    releaseImplementation 'com.kumulos.android:kumulos-android-release:12.0.0'
 }
 
 // Application of google services plugin based on
@@ -25,12 +24,11 @@ dependencies {
 buildscript {
     repositories {
         google()
-        jcenter()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.google.gms:google-services:4.2.0'
+        classpath 'com.google.gms:google-services:4.3.8'
     }
 }
 
@@ -39,11 +37,21 @@ buildscript {
 // to cdvPluginPostBuildExtras somewhere else, the plugin execution
 // will be skipped and project build will be successfull
 ext.postBuildExtras = {
-    if (file("./src/app/google-service.json").exists()) {
+    if (file("./google-services.json").exists()) {
         if (project.extensions.findByName('googleServices') == null) {
             // apply plugin: 'com.google.gms.google-services'
             // class must be used instead of id(string) to be able to apply plugin from non-root gradle file
             apply plugin: com.google.gms.googleservices.GoogleServicesPlugin
         }
+    }
+
+    def firebaseBomVersion = '28.2.0'
+    dependencies {
+        if (project.hasProperty('KumulosFirebaseBoMVersion')){
+            firebaseBomVersion = project.ext.get("KumulosFirebaseBoMVersion")
+        }
+
+        implementation platform("com.google.firebase:firebase-bom:$firebaseBomVersion")
+        implementation 'com.google.firebase:firebase-messaging'
     }
 }

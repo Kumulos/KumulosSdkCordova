@@ -10,7 +10,7 @@ module.exports = {
         filename: "kumulos-sdk-core.js",
         libraryTarget: 'commonjs2',
         chunkFilename: '[name].bundle.js',
-        jsonpFunction: 'ks_wpJsonp',
+        chunkLoadingGlobal: 'ks_wpJsonp',
         publicPath: 'plugins/cordova-plugin-kumulos-sdk/www/'
     },
     module: {

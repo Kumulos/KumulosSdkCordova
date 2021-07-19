@@ -4,7 +4,7 @@
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
-static const NSString* KSCordovaSdkVersion = @"4.2.4";
+static const NSString* KSCordovaSdkVersion = @"5.0.0";
 
 static CDVInvokedUrlCommand* KSjsCordovaCommand = nil;
 static KSPushNotification* KSpendingPush = nil;
@@ -14,7 +14,7 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification);
 #pragma mark - Plugin interface
 
 @interface KumulosSDKPlugin : CDVPlugin {
-  // Member variables go here.
+    // Member variables go here.
 }
 
 +(void)load;
@@ -34,6 +34,9 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification);
 -(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command;
 -(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command;
 -(void)inAppDeleteMessageFromInbox:(CDVInvokedUrlCommand*)command;
+-(void)inAppMarkAsRead:(CDVInvokedUrlCommand*)command;
+-(void)inAppMarkAllInboxItemsAsRead:(CDVInvokedUrlCommand*)command;
+-(void)inAppGetInboxSummary:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -45,9 +48,9 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         [NSNotificationCenter.defaultCenter addObserver: self
-                                            selector: @selector(didFinishLaunching:)
-                                            name: UIApplicationDidFinishLaunchingNotification
-                                            object: nil];
+                                               selector: @selector(didFinishLaunching:)
+                                                   name: UIApplicationDidFinishLaunchingNotification
+                                                 object: nil];
     });
 }
 
@@ -107,6 +110,12 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 
     [Kumulos initializeWithConfig:config];
 
+    [KumulosInApp setOnInboxUpdated:^(){
+        if (kumulosPluginInstance) {
+            [kumulosPluginInstance sendJsMessageWithType:@"inAppInboxUpdated" andData:@{}];
+        }
+    }];
+
     return;
 }
 
@@ -121,7 +130,7 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 
     NSDictionary* message = @{@"type": type,
                               @"data": data
-                              };
+    };
 
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
     [result setKeepCallback:@(1)];
@@ -244,75 +253,159 @@ static KumulosSDKPlugin* kumulosPluginInstance = nil;
 }
 
 -(void)inAppGetInboxItems:(CDVInvokedUrlCommand*)command {
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
+    [self.commandDelegate runInBackground:^{
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        NSMutableArray<NSDictionary*>* items = [[NSMutableArray alloc] initWithCapacity:inboxItems.count];
 
-    NSDateFormatter* formatter = [NSDateFormatter new];
-    [formatter setTimeStyle:NSDateFormatterFullStyle];
-    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
-    [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+        NSDateFormatter* formatter = [NSDateFormatter new];
+        [formatter setTimeStyle:NSDateFormatterFullStyle];
+        [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZZ"];
+        [formatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
 
-    for (KSInAppInboxItem* item in inboxItems) {
-        [items addObject:@{@"id": item.id,
-                           @"title": item.title,
-                           @"subtitle": item.subtitle,
-                           @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
-                           @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
-                           @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @""}];
-    }
+        for (KSInAppInboxItem* item in inboxItems) {
+            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+            [dict setValuesForKeysWithDictionary:@{@"id": item.id,
+                                                   @"title": item.title,
+                                                   @"subtitle": item.subtitle,
+                                                   @"availableFrom": item.availableFrom ? [formatter stringFromDate:item.availableFrom] : @"",
+                                                   @"availableTo": item.availableTo ? [formatter stringFromDate:item.availableTo] : @"",
+                                                   @"dismissedAt": item.dismissedAt ? [formatter stringFromDate:item.dismissedAt] : @"",
+                                                   @"isRead": @([item isRead])}];
 
-    CDVPluginResult* result = [CDVPluginResult
-                               resultWithStatus:CDVCommandStatus_OK
-                               messageAsArray:items];
+            if (item.sentAt){
+                dict[@"sentAt"] = [formatter stringFromDate:item.sentAt];
+            }
+            if (item.data){
+                dict[@"data"] = item.data;
+            }
+            NSURL* imageUrl = [item getImageUrl];
+            if (imageUrl){
+                dict[@"imageUrl"] = imageUrl.absoluteString;
+            }
 
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+            [items addObject:dict];
+        }
+
+        CDVPluginResult* result = [CDVPluginResult
+                                   resultWithStatus:CDVCommandStatus_OK
+                                   messageAsArray:items];
+
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppPresentInboxMessage:(CDVInvokedUrlCommand*)command {
-    NSNumber* messageId = command.arguments[0];
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
 
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    for (KSInAppInboxItem* msg in inboxItems) {
-        if ([msg.id isEqualToNumber:messageId]) {
-            KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                KSInAppMessagePresentationResult result = [KumulosInApp presentInboxMessage:msg];
 
-            if (result == KSInAppMessagePresentationPresented) {
-                [self.commandDelegate
-                    sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-                    callbackId:command.callbackId];
-            } else {
-                break;
+                if (result == KSInAppMessagePresentationPresented) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                } else {
+                    break;
+                }
             }
         }
-    }
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
-     callbackId:command.callbackId];
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+         callbackId:command.callbackId];
+    }];
 }
 
 -(void)inAppDeleteMessageFromInbox:(CDVInvokedUrlCommand*)command {
-    NSNumber* messageId = command.arguments[0];
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
 
-    NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
-    for (KSInAppInboxItem* msg in inboxItems) {
-        if ([msg.id isEqualToNumber:messageId]) {
-             BOOL result = [KumulosInApp deleteMessageFromInbox:msg];
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                BOOL result = [KumulosInApp deleteMessageFromInbox:msg];
 
-            if (result) {
-                [self.commandDelegate
-                    sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
-                    callbackId:command.callbackId];
+                if (result) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                    return;
+                }
+
+                break;
+            }
+        }
+
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
+         callbackId:command.callbackId];
+    }];
+}
+
+-(void)inAppMarkAsRead:(CDVInvokedUrlCommand*)command {
+    [self.commandDelegate runInBackground:^{
+        NSNumber* messageId = command.arguments[0];
+
+        NSArray<KSInAppInboxItem*>* inboxItems = [KumulosInApp getInboxItems];
+        for (KSInAppInboxItem* msg in inboxItems) {
+            if ([msg.id isEqualToNumber:messageId]) {
+                BOOL result = [KumulosInApp markAsRead:msg];
+
+                if (result) {
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+                     callbackId:command.callbackId];
+                }
+                else{
+                    [self.commandDelegate
+                     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark message as read"]
+                     callbackId:command.callbackId];
+                }
+
                 return;
             }
-
-            break;
         }
-    }
 
-    [self.commandDelegate
-     sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found or not available"]
-     callbackId:command.callbackId];
+        [self.commandDelegate
+         sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Message not found"]
+         callbackId:command.callbackId];
+    }];
+}
+
+-(void)inAppMarkAllInboxItemsAsRead:(CDVInvokedUrlCommand*)command {
+    [self.commandDelegate runInBackground:^{
+        BOOL result = [KumulosInApp markAllInboxItemsAsRead];
+        if (result) {
+            [self.commandDelegate
+             sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK]
+             callbackId:command.callbackId];
+        }
+        else{
+            [self.commandDelegate
+             sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to mark all messages as read"]
+             callbackId:command.callbackId];
+        }
+    }];
+}
+
+-(void)inAppGetInboxSummary:(CDVInvokedUrlCommand*)command {
+    [KumulosInApp getInboxSummaryAsync:^(InAppInboxSummary* summary) {
+        if (summary == nil){
+            [self.commandDelegate
+             sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Could not get inbox summary"]
+             callbackId:command.callbackId];
+        }
+        else{
+            CDVPluginResult* result = [CDVPluginResult
+                                       resultWithStatus:CDVCommandStatus_OK
+                                       messageAsDictionary:@{@"totalCount": @(summary.totalCount), @"unreadCount": @(summary.unreadCount)}];
+
+            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        }
+    }];
 }
 
 @end
@@ -327,11 +420,11 @@ NSDictionary* KSPushDictFromModel(KSPushNotification* notification) {
     NSString *url = notification.url ? [notification.url absoluteString] : nil;
 
     NSMutableDictionary* push = [@{@"id": notification.id,
-                           @"title": title,
-                           @"message": message,
-                           @"data": notification.data ?: NSNull.null,
-                           @"url": url ?: NSNull.null
-                           } mutableCopy];
+                                   @"title": title,
+                                   @"message": message,
+                                   @"data": notification.data ?: NSNull.null,
+                                   @"url": url ?: NSNull.null
+    } mutableCopy];
 
     if (notification.actionIdentifier){
         [push setObject:notification.actionIdentifier forKey:@"actionId"];

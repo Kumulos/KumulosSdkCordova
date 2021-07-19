@@ -44,8 +44,8 @@ export class PushChannelManager {
         method: HttpMethod,
         uuids: string[]
     ): Promise<Response> {
-        return this.client.getInstallId().then(installId => {
-            const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels/subscriptions`;
+        return this.client.getCurrentUserIdentifier().then(userIdentifier => {
+            const url = `${Enums.CrmBaseUrl}/v1/users/${encodeURIComponent(userIdentifier)}/channels/subscriptions`;
             const params = {
                 uuids
             };
@@ -97,9 +97,9 @@ export class PushChannelManager {
      */
     listChannels(): Promise<PushChannel[]> {
         return this.client
-            .getInstallId()
-            .then<Response>(installId => {
-                const url = `${Enums.PushBaseUrl}/v1/app-installs/${installId}/channels`;
+            .getCurrentUserIdentifier()
+            .then<Response>(userIdentifier => {
+                const url = `${Enums.CrmBaseUrl}/v1/users/${encodeURIComponent(userIdentifier)}/channels`;
                 const options = {
                     method: 'GET',
                     headers: this.headers
@@ -129,20 +129,19 @@ export class PushChannelManager {
         }
 
         return this.client
-            .getInstallId()
-            .then<Response>(installId => {
-                const url = `${Enums.PushBaseUrl}/v1/channels`;
+            .getCurrentUserIdentifier()
+            .then<Response>(userIdentifier => {
+                const url = `${Enums.CrmBaseUrl}/v1/channels`;
 
-                let params = {
+                let params: any = {
                     uuid: channelSpec.uuid,
                     name: channelSpec.name,
                     showInPortal: Boolean(channelSpec.showInPortal),
-                    meta: channelSpec.meta,
-                    installId: undefined
+                    meta: channelSpec.meta
                 };
 
                 if (channelSpec.subscribe) {
-                    params.installId = installId;
+                    params.userIdentifier = userIdentifier;
                 }
 
                 const options = {

@@ -46,6 +46,15 @@ interface InAppInboxItem {
     availableFrom: string | '';
     availableTo: string | '';
     dismissedAt: string | '';
+    isRead: boolean;
+    sentAt?: string;
+    data?: { [key: string]: any };
+    imageUrl?: string;
+}
+
+interface InAppInboxSummary {
+    totalCount: number;
+    unreadCount: number;
 }
 
 let currentConfig: KumulosConfig = null;
@@ -54,6 +63,8 @@ let initialized: boolean = false;
 
 let ravenInstance: any = null;
 let exceptionsDuringInit = [];
+
+let inAppInboxUpdatedHandler: () => void | null = null;
 
 function logException(e, uncaught: boolean, context: {} = undefined) {
     if (!initialized || !currentConfig.enableCrashReporting) {
@@ -81,8 +92,12 @@ function nativeMessageHandler(message?: { type: string; data: any } | string) {
     }
 
     const handlerName = `${message.type}Handler`;
+    if (handlerName === 'inAppInboxUpdatedHandler' && typeof inAppInboxUpdatedHandler === 'function'){
+        inAppInboxUpdatedHandler();
+        return;
+    }
 
-    if (typeof currentConfig[handlerName] == 'function') {
+    if (typeof currentConfig[handlerName] === 'function') {
         currentConfig[handlerName](message.data);
     } else {
         console.log(`Kumulos: No handler defined for '${message.type}' event`);
@@ -221,60 +236,6 @@ const Kumulos = {
         cordova.exec(noop, noop, NativeModuleName, 'pushUnregister', []);
     },
     /**
-     * Opts the user in or out of in-app messaging
-     *
-     * Note the configured consent strategy in SDK initialization must
-     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
-     * exception.
-     */
-    inAppUpdateConsentForUser: (consented): void => {
-        cordova.exec(noop, noop, NativeModuleName, 'inAppUpdateUserConsent', [
-            Boolean(consented)
-        ]);
-    },
-    /**
-     * Gets a list of available in-app messages sent to the user and stored in the inbox
-     */
-    inAppGetInboxItems: (): Promise<InAppInboxItem> => {
-        return new Promise((resolve, reject) => {
-            cordova.exec(
-                resolve,
-                reject,
-                NativeModuleName,
-                'inAppGetInboxItems',
-                []
-            );
-        });
-    },
-    /**
-     * Presents the given in-app message to the user from the inbox
-     */
-    inAppPresentInboxMessage: (message: InAppInboxItem): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            cordova.exec(
-                resolve,
-                reject,
-                NativeModuleName,
-                'inAppPresentInboxMessage',
-                [message.id]
-            );
-        });
-    },
-    /**
-     * Presents the given in-app message to the user from the inbox
-     */
-    inAppDeleteMessageFromInbox: (message: InAppInboxItem): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            cordova.exec(
-                resolve,
-                reject,
-                NativeModuleName,
-                'inAppDeleteMessageFromInbox',
-                [message.id]
-            );
-        });
-    },
-    /**
      * Tracks a custom analytics event with Kumulos.
      *
      * Events are persisted locally and synced to the server in the background in batches.
@@ -386,7 +347,115 @@ const Kumulos = {
                 ...beacon
             }
         );
+    },
+
+    //********************IN-APP********************** */
+
+    /**
+     * Opts the user in or out of in-app messaging
+     *
+     * Note the configured consent strategy in SDK initialization must
+     * be set to EXPLICIT_BY_USER otherwise this method throws a runtime
+     * exception.
+     */
+    inAppUpdateConsentForUser: (consented): void => {
+        cordova.exec(noop, noop, NativeModuleName, 'inAppUpdateUserConsent', [
+            Boolean(consented)
+        ]);
+    },
+    /**
+     * Gets a list of available in-app messages sent to the user and stored in the inbox
+     */
+    inAppGetInboxItems: (): Promise<InAppInboxItem[]> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppGetInboxItems',
+                []
+            );
+        });
+    },
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppPresentInboxMessage: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppPresentInboxMessage',
+                [message.id]
+            );
+        });
+    },
+    /**
+     * Presents the given in-app message to the user from the inbox
+     */
+    inAppDeleteMessageFromInbox: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppDeleteMessageFromInbox',
+                [message.id]
+            );
+        });
+    },
+    /**
+     * Marks the given in-app inbox item as read
+     */
+    inAppMarkAsRead: (message: InAppInboxItem): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppMarkAsRead',
+                [message.id]
+            );
+        });
+    },
+    /**
+     * Marks all in-app inbox items as read
+     */
+    inAppMarkAllInboxItemsAsRead: (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppMarkAllInboxItemsAsRead',
+                []
+            );
+        });
+    },
+    /**
+     * Gets in-app inbox summary, which includes counts for total and unread messages.
+     * Promise is rejected if operation fails.
+     */
+    inAppGetInboxSummary: (): Promise<InAppInboxSummary> => {
+        return new Promise((resolve, reject) => {
+            cordova.exec(
+                resolve,
+                reject,
+                NativeModuleName,
+                'inAppGetInboxSummary',
+                []
+            );
+        });
+    },
+    /**
+     * Sets handler which is called when inbox is updated. This includes message marked as read, message opened, deleted, added, evicted or other.
+     */
+    setOnInboxUpdatedHandler: (handler: InboxUpdatedHandler) : void => {
+        inAppInboxUpdatedHandler = handler;
     }
 };
+
+type InboxUpdatedHandler = () => void | null;
 
 export default Kumulos;
