@@ -4,7 +4,7 @@
 #import <KumulosSDK/KumulosSDK.h>
 @import CoreLocation;
 
-static const NSString* KSCordovaSdkVersion = @"5.0.0";
+static const NSString* KSCordovaSdkVersion = @"5.1.0";
 
 static CDVInvokedUrlCommand* KSjsCordovaCommand = nil;
 static KSPushNotification* KSpendingPush = nil;

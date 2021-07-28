@@ -15,8 +15,8 @@ android {
 }
 
 dependencies {
-    debugImplementation 'com.kumulos.android:kumulos-android-debug:12.0.0'
-    releaseImplementation 'com.kumulos.android:kumulos-android-release:12.0.0'
+    debugImplementation 'com.kumulos.android:kumulos-android-debug:12.1.0'
+    releaseImplementation 'com.kumulos.android:kumulos-android-release:12.1.0'
 }
 
 // Application of google services plugin based on
