@@ -28,3 +28,8 @@ Release:
 -   [ ] Create tag from master matching chosen version
 -   [ ] Fill out release notes
 -   [ ] Run `npm publish`
+
+Update changelog:
+
+- [ ] https://docs.kumulos.com/developer-guide/sdk-reference/cordova/#changelog
+
